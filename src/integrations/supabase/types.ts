@@ -516,6 +516,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_link_store_product: {
+        Args: { p_canonical_id: string; p_store_product_id: string }
+        Returns: undefined
+      }
+      admin_overview_stats: { Args: never; Returns: Json }
+      admin_suggest_canonical: {
+        Args: { p_store_product_id: string }
+        Returns: {
+          barcode: string
+          brand: string
+          category_name: string
+          id: string
+          image_url: string
+          name: string
+          quantity: number
+          score: number
+          unit: string
+        }[]
+      }
       compute_list_comparison: { Args: { p_list_id: string }; Returns: Json }
       get_price_history: {
         Args: { p_days?: number; p_product_id: string }
