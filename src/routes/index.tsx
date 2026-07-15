@@ -35,14 +35,24 @@ function Index() {
   const lastUpdated = useQuery(lastUpdatedQuery);
 
   const offerCards: Offer[] =
-    offers.data?.map((o) => ({
-      id: o.id,
-      product: o.products?.name ?? "Produto",
-      market: o.markets?.name ?? "—",
-      price: formatCurrency(Number(o.price)),
-      oldPrice: o.old_price != null ? formatCurrency(Number(o.old_price)) : undefined,
-      validUntil: o.valid_until ?? undefined,
-    })) ?? [];
+    offers.data?.map((o) => {
+      const sp = o.store_products;
+      const cp = sp?.canonical_products;
+      const productName = cp?.name ?? sp?.external_name ?? "Produto";
+      return {
+        id: o.id,
+        product: productName,
+        market: sp?.stores?.name ?? "—",
+        price: formatCurrency(Number(o.effective_price)),
+        oldPrice:
+          o.promotional_price != null && o.regular_price != null
+            ? formatCurrency(Number(o.regular_price))
+            : undefined,
+        validUntil: o.promotion_end_at
+          ? new Date(o.promotion_end_at).toLocaleDateString("pt-BR")
+          : undefined,
+      };
+    }) ?? [];
 
   return (
     <div>
