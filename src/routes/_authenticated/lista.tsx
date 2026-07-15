@@ -2,13 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/lista")({
+export const Route = createFileRoute("/_authenticated/lista")({
   head: () => ({
     meta: [
       { title: "Minha lista — Compra Certa Marília" },
       { name: "description", content: "Monte sua lista de compras e descubra em qual mercado sai mais barato." },
-      { property: "og:title", content: "Minha lista — Compra Certa Marília" },
-      { property: "og:description", content: "Monte sua lista de compras e descubra em qual mercado sai mais barato." },
+      { name: "robots", content: "noindex" },
     ],
   }),
   component: ListaPage,
