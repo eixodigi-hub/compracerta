@@ -14,154 +14,52 @@ export type Database = {
   }
   public: {
     Tables: {
-      categories: {
-        Row: {
-          created_at: string
-          icon: string | null
-          id: string
-          name: string
-          slug: string
-          sort_order: number
-        }
-        Insert: {
-          created_at?: string
-          icon?: string | null
-          id?: string
-          name: string
-          slug: string
-          sort_order?: number
-        }
-        Update: {
-          created_at?: string
-          icon?: string | null
-          id?: string
-          name?: string
-          slug?: string
-          sort_order?: number
-        }
-        Relationships: []
-      }
-      markets: {
+      canonical_products: {
         Row: {
           active: boolean
-          address: string | null
-          created_at: string
-          id: string
-          logo_url: string | null
-          name: string
-          slug: string
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean
-          address?: string | null
-          created_at?: string
-          id?: string
-          logo_url?: string | null
-          name: string
-          slug: string
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean
-          address?: string | null
-          created_at?: string
-          id?: string
-          logo_url?: string | null
-          name?: string
-          slug?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      prices: {
-        Row: {
-          collected_at: string
-          id: string
-          is_promo: boolean
-          market_id: string
-          old_price: number | null
-          price: number
-          product_id: string
-          source: string | null
-          valid_until: string | null
-        }
-        Insert: {
-          collected_at?: string
-          id?: string
-          is_promo?: boolean
-          market_id: string
-          old_price?: number | null
-          price: number
-          product_id: string
-          source?: string | null
-          valid_until?: string | null
-        }
-        Update: {
-          collected_at?: string
-          id?: string
-          is_promo?: boolean
-          market_id?: string
-          old_price?: number | null
-          price?: number
-          product_id?: string
-          source?: string | null
-          valid_until?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "prices_market_id_fkey"
-            columns: ["market_id"]
-            isOneToOne: false
-            referencedRelation: "markets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "prices_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      products: {
-        Row: {
           barcode: string | null
           brand: string | null
           category_id: string | null
           created_at: string
+          description: string | null
           id: string
           image_url: string | null
           name: string
+          quantity: number | null
           unit: string | null
           updated_at: string
         }
         Insert: {
+          active?: boolean
           barcode?: string | null
           brand?: string | null
           category_id?: string | null
           created_at?: string
+          description?: string | null
           id?: string
           image_url?: string | null
           name: string
+          quantity?: number | null
           unit?: string | null
           updated_at?: string
         }
         Update: {
+          active?: boolean
           barcode?: string | null
           brand?: string | null
           category_id?: string | null
           created_at?: string
+          description?: string | null
           id?: string
           image_url?: string | null
           name?: string
+          quantity?: number | null
           unit?: string | null
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "products_category_id_fkey"
+            foreignKeyName: "canonical_products_category_id_fkey"
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
@@ -169,71 +67,275 @@ export type Database = {
           },
         ]
       }
+      categories: {
+        Row: {
+          active: boolean
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      cities: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          state: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          state: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          state?: string
+        }
+        Relationships: []
+      }
+      current_prices: {
+        Row: {
+          collected_at: string
+          effective_price: number
+          id: string
+          in_stock: boolean
+          price_per_unit: number | null
+          promotion_end_at: string | null
+          promotion_text: string | null
+          promotional_price: number | null
+          regular_price: number
+          store_product_id: string
+          updated_at: string
+        }
+        Insert: {
+          collected_at?: string
+          effective_price: number
+          id?: string
+          in_stock?: boolean
+          price_per_unit?: number | null
+          promotion_end_at?: string | null
+          promotion_text?: string | null
+          promotional_price?: number | null
+          regular_price: number
+          store_product_id: string
+          updated_at?: string
+        }
+        Update: {
+          collected_at?: string
+          effective_price?: number
+          id?: string
+          in_stock?: boolean
+          price_per_unit?: number | null
+          promotion_end_at?: string | null
+          promotion_text?: string | null
+          promotional_price?: number | null
+          regular_price?: number
+          store_product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "current_prices_store_product_id_fkey"
+            columns: ["store_product_id"]
+            isOneToOne: true
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ingestion_runs: {
+        Row: {
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          products_found: number
+          products_updated: number
+          started_at: string
+          status: Database["public"]["Enums"]["ingestion_status"]
+          store_id: string
+        }
+        Insert: {
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          products_found?: number
+          products_updated?: number
+          started_at?: string
+          status?: Database["public"]["Enums"]["ingestion_status"]
+          store_id: string
+        }
+        Update: {
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          products_found?: number
+          products_updated?: number
+          started_at?: string
+          status?: Database["public"]["Enums"]["ingestion_status"]
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingestion_runs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      price_history: {
+        Row: {
+          collected_at: string
+          effective_price: number
+          id: string
+          in_stock: boolean
+          promotional_price: number | null
+          regular_price: number
+          store_product_id: string
+        }
+        Insert: {
+          collected_at?: string
+          effective_price: number
+          id?: string
+          in_stock?: boolean
+          promotional_price?: number | null
+          regular_price: number
+          store_product_id: string
+        }
+        Update: {
+          collected_at?: string
+          effective_price?: number
+          id?: string
+          in_stock?: boolean
+          promotional_price?: number | null
+          regular_price?: number
+          store_product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_history_store_product_id_fkey"
+            columns: ["store_product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           city: string | null
+          city_id: string | null
           created_at: string
           display_name: string | null
+          full_name: string | null
           id: string
           updated_at: string
         }
         Insert: {
           city?: string | null
+          city_id?: string | null
           created_at?: string
           display_name?: string | null
+          full_name?: string | null
           id: string
           updated_at?: string
         }
         Update: {
           city?: string | null
+          city_id?: string | null
           created_at?: string
           display_name?: string | null
+          full_name?: string | null
           id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shopping_list_items: {
         Row: {
+          allow_similar_products: boolean
+          canonical_product_id: string
           created_at: string
           id: string
-          list_id: string
-          product_id: string
           quantity: number
+          shopping_list_id: string
+          updated_at: string
         }
         Insert: {
+          allow_similar_products?: boolean
+          canonical_product_id: string
           created_at?: string
           id?: string
-          list_id: string
-          product_id: string
           quantity?: number
+          shopping_list_id: string
+          updated_at?: string
         }
         Update: {
+          allow_similar_products?: boolean
+          canonical_product_id?: string
           created_at?: string
           id?: string
-          list_id?: string
-          product_id?: string
           quantity?: number
+          shopping_list_id?: string
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "shopping_list_items_list_id_fkey"
-            columns: ["list_id"]
+            foreignKeyName: "shopping_list_items_canonical_product_id_fkey"
+            columns: ["canonical_product_id"]
             isOneToOne: false
-            referencedRelation: "shopping_lists"
+            referencedRelation: "canonical_products"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "shopping_list_items_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "shopping_list_items_shopping_list_id_fkey"
+            columns: ["shopping_list_id"]
             isOneToOne: false
-            referencedRelation: "products"
+            referencedRelation: "shopping_lists"
             referencedColumns: ["id"]
           },
         ]
       }
       shopping_lists: {
         Row: {
+          city_id: string | null
           created_at: string
           id: string
           name: string
@@ -241,6 +343,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          city_id?: string | null
           created_at?: string
           id?: string
           name?: string
@@ -248,13 +351,144 @@ export type Database = {
           user_id: string
         }
         Update: {
+          city_id?: string | null
           created_at?: string
           id?: string
           name?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "shopping_lists_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_products: {
+        Row: {
+          active: boolean
+          available: boolean
+          barcode_raw: string | null
+          brand_raw: string | null
+          canonical_product_id: string | null
+          created_at: string
+          external_id: string
+          external_name: string
+          id: string
+          image_url: string | null
+          last_seen_at: string | null
+          product_url: string | null
+          quantity_raw: string | null
+          store_id: string
+          unit_raw: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          available?: boolean
+          barcode_raw?: string | null
+          brand_raw?: string | null
+          canonical_product_id?: string | null
+          created_at?: string
+          external_id: string
+          external_name: string
+          id?: string
+          image_url?: string | null
+          last_seen_at?: string | null
+          product_url?: string | null
+          quantity_raw?: string | null
+          store_id: string
+          unit_raw?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          available?: boolean
+          barcode_raw?: string | null
+          brand_raw?: string | null
+          canonical_product_id?: string | null
+          created_at?: string
+          external_id?: string
+          external_name?: string
+          id?: string
+          image_url?: string | null
+          last_seen_at?: string | null
+          product_url?: string | null
+          quantity_raw?: string | null
+          store_id?: string
+          unit_raw?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_products_canonical_product_id_fkey"
+            columns: ["canonical_product_id"]
+            isOneToOne: false
+            referencedRelation: "canonical_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_products_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stores: {
+        Row: {
+          active: boolean
+          address: string | null
+          city_id: string
+          created_at: string
+          id: string
+          last_successful_sync_at: string | null
+          logo_url: string | null
+          name: string
+          slug: string
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          active?: boolean
+          address?: string | null
+          city_id: string
+          created_at?: string
+          id?: string
+          last_successful_sync_at?: string | null
+          logo_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          active?: boolean
+          address?: string | null
+          city_id?: string
+          created_at?: string
+          id?: string
+          last_successful_sync_at?: string | null
+          logo_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stores_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -279,35 +513,7 @@ export type Database = {
       }
     }
     Views: {
-      latest_prices: {
-        Row: {
-          collected_at: string | null
-          id: string | null
-          is_promo: boolean | null
-          market_id: string | null
-          old_price: number | null
-          price: number | null
-          product_id: string | null
-          source: string | null
-          valid_until: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "prices_market_id_fkey"
-            columns: ["market_id"]
-            isOneToOne: false
-            referencedRelation: "markets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "prices_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       has_role: {
@@ -317,9 +523,34 @@ export type Database = {
         }
         Returns: boolean
       }
+      immutable_unaccent: { Args: { "": string }; Returns: string }
+      search_canonical_products: {
+        Args: { max_results?: number; q: string }
+        Returns: {
+          active: boolean
+          barcode: string | null
+          brand: string | null
+          category_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          quantity: number | null
+          unit: string | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "canonical_products"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
     }
     Enums: {
       app_role: "admin" | "user"
+      ingestion_status: "running" | "success" | "partial" | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -448,6 +679,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      ingestion_status: ["running", "success", "partial", "failed"],
     },
   },
 } as const
