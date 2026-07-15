@@ -516,6 +516,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      compute_list_comparison: { Args: { p_list_id: string }; Returns: Json }
       get_price_history: {
         Args: { p_days?: number; p_product_id: string }
         Returns: {
