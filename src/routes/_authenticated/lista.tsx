@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Trash2, Pencil, Check, X, Search, ShoppingBasket, AlertCircle, Store as StoreIcon, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -267,7 +267,7 @@ function AddItemPanel({ listId, onAdded }: { listId: string; onAdded: () => void
   const [debounced, setDebounced] = useState("");
   const [open, setOpen] = useState(false);
 
-  useMemo(() => {
+  useEffect(() => {
     const t = setTimeout(() => setDebounced(q), 300);
     return () => clearTimeout(t);
   }, [q]);
