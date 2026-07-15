@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import type { LucideIcon } from "lucide-react";
+import { getCategoryIcon } from "@/lib/category-icons";
 
-export type Category = { slug: string; name: string; icon: LucideIcon };
+export type Category = { slug: string; name: string; icon: string | null };
 
 export function CategoryCard({ category }: { category: Category }) {
-  const Icon = category.icon;
+  const Icon = getCategoryIcon(category.icon);
   return (
     <Link
       to="/pesquisar"
