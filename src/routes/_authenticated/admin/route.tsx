@@ -62,7 +62,7 @@ function AdminLayout() {
           {nav.map((item) => (
             <Link
               key={item.to}
-              to={item.to}
+              to={item.to as never}
               activeOptions={{ exact: item.exact ?? false }}
               className={cn(
                 "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors text-muted-foreground hover:bg-muted",
