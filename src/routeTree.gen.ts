@@ -9,38 +9,175 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PesquisarRouteImport } from './routes/pesquisar'
+import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as OfertasRouteImport } from './routes/ofertas'
+import { Route as ListaRouteImport } from './routes/lista'
+import { Route as EntrarRouteImport } from './routes/entrar'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProdutoIdRouteImport } from './routes/produto.$id'
 
+const PesquisarRoute = PesquisarRouteImport.update({
+  id: '/pesquisar',
+  path: '/pesquisar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OfertasRoute = OfertasRouteImport.update({
+  id: '/ofertas',
+  path: '/ofertas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListaRoute = ListaRouteImport.update({
+  id: '/lista',
+  path: '/lista',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EntrarRoute = EntrarRouteImport.update({
+  id: '/entrar',
+  path: '/entrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProdutoIdRoute = ProdutoIdRouteImport.update({
+  id: '/produto/$id',
+  path: '/produto/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/entrar': typeof EntrarRoute
+  '/lista': typeof ListaRoute
+  '/ofertas': typeof OfertasRoute
+  '/perfil': typeof PerfilRoute
+  '/pesquisar': typeof PesquisarRoute
+  '/produto/$id': typeof ProdutoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/entrar': typeof EntrarRoute
+  '/lista': typeof ListaRoute
+  '/ofertas': typeof OfertasRoute
+  '/perfil': typeof PerfilRoute
+  '/pesquisar': typeof PesquisarRoute
+  '/produto/$id': typeof ProdutoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/entrar': typeof EntrarRoute
+  '/lista': typeof ListaRoute
+  '/ofertas': typeof OfertasRoute
+  '/perfil': typeof PerfilRoute
+  '/pesquisar': typeof PesquisarRoute
+  '/produto/$id': typeof ProdutoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/entrar'
+    | '/lista'
+    | '/ofertas'
+    | '/perfil'
+    | '/pesquisar'
+    | '/produto/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/admin'
+    | '/entrar'
+    | '/lista'
+    | '/ofertas'
+    | '/perfil'
+    | '/pesquisar'
+    | '/produto/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/entrar'
+    | '/lista'
+    | '/ofertas'
+    | '/perfil'
+    | '/pesquisar'
+    | '/produto/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  EntrarRoute: typeof EntrarRoute
+  ListaRoute: typeof ListaRoute
+  OfertasRoute: typeof OfertasRoute
+  PerfilRoute: typeof PerfilRoute
+  PesquisarRoute: typeof PesquisarRoute
+  ProdutoIdRoute: typeof ProdutoIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/pesquisar': {
+      id: '/pesquisar'
+      path: '/pesquisar'
+      fullPath: '/pesquisar'
+      preLoaderRoute: typeof PesquisarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ofertas': {
+      id: '/ofertas'
+      path: '/ofertas'
+      fullPath: '/ofertas'
+      preLoaderRoute: typeof OfertasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lista': {
+      id: '/lista'
+      path: '/lista'
+      fullPath: '/lista'
+      preLoaderRoute: typeof ListaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/entrar': {
+      id: '/entrar'
+      path: '/entrar'
+      fullPath: '/entrar'
+      preLoaderRoute: typeof EntrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +185,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/produto/$id': {
+      id: '/produto/$id'
+      path: '/produto/$id'
+      fullPath: '/produto/$id'
+      preLoaderRoute: typeof ProdutoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  EntrarRoute: EntrarRoute,
+  ListaRoute: ListaRoute,
+  OfertasRoute: OfertasRoute,
+  PerfilRoute: PerfilRoute,
+  PesquisarRoute: PesquisarRoute,
+  ProdutoIdRoute: ProdutoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
