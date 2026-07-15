@@ -524,6 +524,12 @@ export type Database = {
         Returns: boolean
       }
       immutable_unaccent: { Args: { "": string }; Returns: string }
+      list_search_brands: {
+        Args: never
+        Returns: {
+          brand: string
+        }[]
+      }
       search_canonical_products: {
         Args: { max_results?: number; q: string }
         Returns: {
@@ -546,6 +552,39 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      search_products: {
+        Args: {
+          brand_filter?: string
+          category_slug?: string
+          limit_count?: number
+          max_price?: number
+          min_price?: number
+          offset_count?: number
+          only_available?: boolean
+          only_offers?: boolean
+          q?: string
+          sort_by?: string
+          store_id_filter?: string
+        }
+        Returns: {
+          barcode: string
+          brand: string
+          category_id: string
+          category_name: string
+          category_slug: string
+          has_promotion: boolean
+          id: string
+          image_url: string
+          last_updated: string
+          market_count: number
+          max_discount_pct: number
+          min_price: number
+          name: string
+          quantity: number
+          reference_price: number
+          unit: string
+        }[]
       }
     }
     Enums: {
