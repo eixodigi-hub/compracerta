@@ -209,8 +209,9 @@ export const Route = createFileRoute("/api/public/ingest-products")({
           }
         }
 
-        const success = counts.errors < products.length;
-        const finalStatus = success ? "success" : "failed";
+        const anySuccess = counts.errors < products.length;
+        const finalStatus =
+          counts.errors === 0 ? "success" : anySuccess ? "partial" : "failed";
 
         await supabaseAdmin
           .from("ingestion_runs")
