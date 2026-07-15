@@ -223,7 +223,7 @@ export const Route = createFileRoute("/api/public/ingest-products")({
           })
           .eq("id", run.id);
 
-        if (success) {
+        if (finalStatus === "success" || finalStatus === "partial") {
           await supabaseAdmin
             .from("stores")
             .update({ last_successful_sync_at: new Date().toISOString() })
