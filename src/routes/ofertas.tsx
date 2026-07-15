@@ -94,7 +94,7 @@ function OfertasPage() {
   });
 
   const update = (patch: Partial<z.infer<typeof searchSchema>>) =>
-    navigate({ search: (prev) => ({ ...prev, ...patch }) });
+    navigate({ search: (prev: z.infer<typeof searchSchema>) => ({ ...prev, ...patch }) });
 
   async function handleAddToList(offer: OfferRow) {
     if (!user) {
