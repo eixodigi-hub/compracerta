@@ -72,7 +72,7 @@ function PesquisarPage() {
   useEffect(() => {
     const id = setTimeout(() => {
       if (qDraft !== search.q) {
-        navigate({ search: (prev) => ({ ...prev, q: qDraft }), replace: true });
+        navigate({ search: (prev: any) => ({ ...prev, q: qDraft }), replace: true });
       }
     }, 300);
     return () => clearTimeout(id);
@@ -173,7 +173,7 @@ function PesquisarPage() {
                   value={search.category || "all"}
                   onValueChange={(v) =>
                     navigate({
-                      search: (prev) => ({ ...prev, category: v === "all" ? "" : v }),
+                      search: (prev: any) => ({ ...prev, category: v === "all" ? "" : v }),
                     })
                   }
                 >
@@ -193,7 +193,7 @@ function PesquisarPage() {
                   value={search.brand || "all"}
                   onValueChange={(v) =>
                     navigate({
-                      search: (prev) => ({ ...prev, brand: v === "all" ? "" : v }),
+                      search: (prev: any) => ({ ...prev, brand: v === "all" ? "" : v }),
                     })
                   }
                 >
@@ -213,7 +213,7 @@ function PesquisarPage() {
                   value={search.store || "all"}
                   onValueChange={(v) =>
                     navigate({
-                      search: (prev) => ({ ...prev, store: v === "all" ? "" : v }),
+                      search: (prev: any) => ({ ...prev, store: v === "all" ? "" : v }),
                     })
                   }
                 >
@@ -235,7 +235,7 @@ function PesquisarPage() {
                   id="filter-available"
                   checked={search.available}
                   onCheckedChange={(v) =>
-                    navigate({ search: (prev) => ({ ...prev, available: v }) })
+                    navigate({ search: (prev: any) => ({ ...prev, available: v }) })
                   }
                 />
               </div>
@@ -248,7 +248,7 @@ function PesquisarPage() {
                   id="filter-offers"
                   checked={search.offers}
                   onCheckedChange={(v) =>
-                    navigate({ search: (prev) => ({ ...prev, offers: v }) })
+                    navigate({ search: (prev: any) => ({ ...prev, offers: v }) })
                   }
                 />
               </div>
@@ -265,7 +265,7 @@ function PesquisarPage() {
                     value={search.min || ""}
                     onChange={(e) =>
                       navigate({
-                        search: (prev) => ({ ...prev, min: Number(e.target.value) || 0 }),
+                        search: (prev: any) => ({ ...prev, min: Number(e.target.value) || 0 }),
                         replace: true,
                       })
                     }
@@ -280,7 +280,7 @@ function PesquisarPage() {
                     value={search.max || ""}
                     onChange={(e) =>
                       navigate({
-                        search: (prev) => ({ ...prev, max: Number(e.target.value) || 0 }),
+                        search: (prev: any) => ({ ...prev, max: Number(e.target.value) || 0 }),
                         replace: true,
                       })
                     }
@@ -303,7 +303,7 @@ function PesquisarPage() {
       <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => navigate({ search: (prev) => ({ ...prev, category: "" }) })}
+          onClick={() => navigate({ search: (prev: any) => ({ ...prev, category: "" }) })}
           className={`rounded-full border px-3 py-1 text-sm transition-colors ${
             !search.category
               ? "border-primary bg-primary text-primary-foreground"
@@ -317,7 +317,7 @@ function PesquisarPage() {
             key={c.id}
             type="button"
             onClick={() =>
-              navigate({ search: (prev) => ({ ...prev, category: c.slug }) })
+              navigate({ search: (prev: any) => ({ ...prev, category: c.slug }) })
             }
             className={`rounded-full border px-3 py-1 text-sm transition-colors ${
               search.category === c.slug
@@ -344,7 +344,7 @@ function PesquisarPage() {
           <Select
             value={sortBy}
             onValueChange={(v) =>
-              navigate({ search: (prev) => ({ ...prev, sort: v }) })
+              navigate({ search: (prev: any) => ({ ...prev, sort: v }) })
             }
           >
             <SelectTrigger id="sort" className="w-[180px]">
