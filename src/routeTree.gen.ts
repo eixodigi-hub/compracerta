@@ -10,10 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PesquisarRouteImport } from './routes/pesquisar'
-import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OfertasRouteImport } from './routes/ofertas'
-import { Route as ListaRouteImport } from './routes/lista'
-import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProdutoIdRouteImport } from './routes/produto.$id'
@@ -23,24 +20,9 @@ const PesquisarRoute = PesquisarRouteImport.update({
   path: '/pesquisar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PerfilRoute = PerfilRouteImport.update({
-  id: '/perfil',
-  path: '/perfil',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const OfertasRoute = OfertasRouteImport.update({
   id: '/ofertas',
   path: '/ofertas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ListaRoute = ListaRouteImport.update({
-  id: '/lista',
-  path: '/lista',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EntrarRoute = EntrarRouteImport.update({
-  id: '/entrar',
-  path: '/entrar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -62,20 +44,14 @@ const ProdutoIdRoute = ProdutoIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/entrar': typeof EntrarRoute
-  '/lista': typeof ListaRoute
   '/ofertas': typeof OfertasRoute
-  '/perfil': typeof PerfilRoute
   '/pesquisar': typeof PesquisarRoute
   '/produto/$id': typeof ProdutoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/entrar': typeof EntrarRoute
-  '/lista': typeof ListaRoute
   '/ofertas': typeof OfertasRoute
-  '/perfil': typeof PerfilRoute
   '/pesquisar': typeof PesquisarRoute
   '/produto/$id': typeof ProdutoIdRoute
 }
@@ -83,53 +59,22 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/entrar': typeof EntrarRoute
-  '/lista': typeof ListaRoute
   '/ofertas': typeof OfertasRoute
-  '/perfil': typeof PerfilRoute
   '/pesquisar': typeof PesquisarRoute
   '/produto/$id': typeof ProdutoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/admin'
-    | '/entrar'
-    | '/lista'
-    | '/ofertas'
-    | '/perfil'
-    | '/pesquisar'
-    | '/produto/$id'
+  fullPaths: '/' | '/admin' | '/ofertas' | '/pesquisar' | '/produto/$id'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/admin'
-    | '/entrar'
-    | '/lista'
-    | '/ofertas'
-    | '/perfil'
-    | '/pesquisar'
-    | '/produto/$id'
-  id:
-    | '__root__'
-    | '/'
-    | '/admin'
-    | '/entrar'
-    | '/lista'
-    | '/ofertas'
-    | '/perfil'
-    | '/pesquisar'
-    | '/produto/$id'
+  to: '/' | '/admin' | '/ofertas' | '/pesquisar' | '/produto/$id'
+  id: '__root__' | '/' | '/admin' | '/ofertas' | '/pesquisar' | '/produto/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
-  EntrarRoute: typeof EntrarRoute
-  ListaRoute: typeof ListaRoute
   OfertasRoute: typeof OfertasRoute
-  PerfilRoute: typeof PerfilRoute
   PesquisarRoute: typeof PesquisarRoute
   ProdutoIdRoute: typeof ProdutoIdRoute
 }
@@ -143,32 +88,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PesquisarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/perfil': {
-      id: '/perfil'
-      path: '/perfil'
-      fullPath: '/perfil'
-      preLoaderRoute: typeof PerfilRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/ofertas': {
       id: '/ofertas'
       path: '/ofertas'
       fullPath: '/ofertas'
       preLoaderRoute: typeof OfertasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lista': {
-      id: '/lista'
-      path: '/lista'
-      fullPath: '/lista'
-      preLoaderRoute: typeof ListaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/entrar': {
-      id: '/entrar'
-      path: '/entrar'
-      fullPath: '/entrar'
-      preLoaderRoute: typeof EntrarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -198,10 +122,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
-  EntrarRoute: EntrarRoute,
-  ListaRoute: ListaRoute,
   OfertasRoute: OfertasRoute,
-  PerfilRoute: PerfilRoute,
   PesquisarRoute: PesquisarRoute,
   ProdutoIdRoute: ProdutoIdRoute,
 }
