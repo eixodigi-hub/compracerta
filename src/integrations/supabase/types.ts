@@ -516,6 +516,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_price_history: {
+        Args: { p_days?: number; p_product_id: string }
+        Returns: {
+          avg_price: number
+          day: string
+          max_price: number
+          min_price: number
+        }[]
+      }
+      get_price_stats: {
+        Args: { p_days?: number; p_product_id: string }
+        Returns: Json
+      }
+      get_product_detail: { Args: { p_product_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
