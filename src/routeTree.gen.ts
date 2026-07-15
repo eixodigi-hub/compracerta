@@ -20,6 +20,7 @@ import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedListaRouteImport } from './routes/_authenticated/lista'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as ApiPublicIngestProductsRouteImport } from './routes/api/public/ingest-products'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
 import { Route as AuthenticatedAdminProdutosColetadosRouteImport } from './routes/_authenticated/admin/produtos-coletados'
 import { Route as AuthenticatedAdminProdutosCanonicosRouteImport } from './routes/_authenticated/admin/produtos-canonicos'
@@ -82,6 +83,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
+const ApiPublicIngestProductsRoute = ApiPublicIngestProductsRouteImport.update({
+  id: '/api/public/ingest-products',
+  path: '/api/public/ingest-products',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminUsuariosRoute =
   AuthenticatedAdminUsuariosRouteImport.update({
     id: '/usuarios',
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/admin/produtos-canonicos': typeof AuthenticatedAdminProdutosCanonicosRoute
   '/admin/produtos-coletados': typeof AuthenticatedAdminProdutosColetadosRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/api/public/ingest-products': typeof ApiPublicIngestProductsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/admin/produtos-canonicos': typeof AuthenticatedAdminProdutosCanonicosRoute
   '/admin/produtos-coletados': typeof AuthenticatedAdminProdutosColetadosRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/api/public/ingest-products': typeof ApiPublicIngestProductsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/produtos-canonicos': typeof AuthenticatedAdminProdutosCanonicosRoute
   '/_authenticated/admin/produtos-coletados': typeof AuthenticatedAdminProdutosColetadosRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/api/public/ingest-products': typeof ApiPublicIngestProductsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -202,6 +211,7 @@ export interface FileRouteTypes {
     | '/admin/produtos-canonicos'
     | '/admin/produtos-coletados'
     | '/admin/usuarios'
+    | '/api/public/ingest-products'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/admin/produtos-canonicos'
     | '/admin/produtos-coletados'
     | '/admin/usuarios'
+    | '/api/public/ingest-products'
     | '/admin'
   id:
     | '__root__'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/produtos-canonicos'
     | '/_authenticated/admin/produtos-coletados'
     | '/_authenticated/admin/usuarios'
+    | '/api/public/ingest-products'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -251,6 +263,7 @@ export interface RootRouteChildren {
   PesquisarRoute: typeof PesquisarRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ProdutoIdRoute: typeof ProdutoIdRoute
+  ApiPublicIngestProductsRoute: typeof ApiPublicIngestProductsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -331,6 +344,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/api/public/ingest-products': {
+      id: '/api/public/ingest-products'
+      path: '/api/public/ingest-products'
+      fullPath: '/api/public/ingest-products'
+      preLoaderRoute: typeof ApiPublicIngestProductsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/usuarios': {
       id: '/_authenticated/admin/usuarios'
@@ -437,17 +457,8 @@ const rootRouteChildren: RootRouteChildren = {
   PesquisarRoute: PesquisarRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ProdutoIdRoute: ProdutoIdRoute,
+  ApiPublicIngestProductsRoute: ApiPublicIngestProductsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
