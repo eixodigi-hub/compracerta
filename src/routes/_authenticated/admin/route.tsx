@@ -63,15 +63,13 @@ function AdminLayout() {
             <Link
               key={item.to}
               to={item.to}
-              activeOptions={{ exact: item.exact }}
-              className={({ isActive }: { isActive: boolean }) =>
-                cn(
-                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                  isActive
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:bg-muted",
-                )
-              }
+              activeOptions={{ exact: item.exact ?? false }}
+              className={cn(
+                "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors text-muted-foreground hover:bg-muted",
+              )}
+              activeProps={{
+                className: "bg-primary/10 text-primary font-medium hover:bg-primary/10",
+              }}
             >
               <item.icon className="h-4 w-4" aria-hidden="true" />
               {item.label}

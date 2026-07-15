@@ -28,7 +28,7 @@ function Page() {
         .select("id, status, products_found, products_updated, error_message, started_at, finished_at, stores(name)", { count: "exact" })
         .order("started_at", { ascending: false })
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
-      if (status !== "all") q = q.eq("status", status);
+      if (status !== "all") q = q.eq("status", status as "success" | "failed" | "running" | "partial");
       const { data, error, count } = await q;
       if (error) throw error;
       return { rows: data ?? [], count: count ?? 0 };

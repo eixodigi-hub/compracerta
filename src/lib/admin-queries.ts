@@ -27,9 +27,11 @@ export type OverviewStats = {
 };
 
 export async function fetchOverview(): Promise<OverviewStats> {
-  const { data, error } = await supabase.rpc("admin_overview_stats" as never);
+  const { data, error } = await (supabase.rpc as unknown as (name: string) => Promise<{ data: unknown; error: Error | null }>)(
+    "admin_overview_stats",
+  );
   if (error) throw error;
-  return data as unknown as OverviewStats;
+  return data as OverviewStats;
 }
 
 export type CanonicalSuggestion = {
@@ -45,17 +47,18 @@ export type CanonicalSuggestion = {
 };
 
 export async function suggestCanonical(storeProductId: string) {
-  const { data, error } = await supabase.rpc("admin_suggest_canonical" as never, {
-    p_store_product_id: storeProductId,
-  });
+  const { data, error } = await (supabase.rpc as unknown as (name: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>)(
+    "admin_suggest_canonical",
+    { p_store_product_id: storeProductId },
+  );
   if (error) throw error;
-  return (data ?? []) as unknown as CanonicalSuggestion[];
+  return (data ?? []) as CanonicalSuggestion[];
 }
 
 export async function linkStoreProduct(storeProductId: string, canonicalId: string | null) {
-  const { error } = await supabase.rpc("admin_link_store_product" as never, {
-    p_store_product_id: storeProductId,
-    p_canonical_id: canonicalId,
-  });
+  const { error } = await (supabase.rpc as unknown as (name: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>)(
+    "admin_link_store_product",
+    { p_store_product_id: storeProductId, p_canonical_id: canonicalId },
+  );
   if (error) throw error;
 }
