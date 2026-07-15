@@ -539,6 +539,36 @@ export type Database = {
         Returns: boolean
       }
       immutable_unaccent: { Args: { "": string }; Returns: string }
+      list_current_offers: {
+        Args: {
+          brand_filter?: string
+          category_slug?: string
+          limit_count?: number
+          max_age_hours?: number
+          min_discount?: number
+          store_id_filter?: string
+        }
+        Returns: {
+          brand: string
+          category_name: string
+          category_slug: string
+          collected_at: string
+          discount_pct: number
+          image_url: string
+          product_id: string
+          product_name: string
+          product_url: string
+          promotion_end_at: string
+          promotional_price: number
+          quantity: number
+          regular_price: number
+          store_id: string
+          store_name: string
+          store_product_id: string
+          store_slug: string
+          unit: string
+        }[]
+      }
       list_search_brands: {
         Args: never
         Returns: {
