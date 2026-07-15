@@ -1,13 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { ShoppingBasket } from "lucide-react";
 
-const items = [
+const items: Array<{ to: "/" | "/pesquisar" | "/lista" | "/ofertas" | "/perfil"; label: string; exact?: boolean }> = [
   { to: "/", label: "Início", exact: true },
   { to: "/pesquisar", label: "Pesquisar" },
   { to: "/lista", label: "Lista" },
   { to: "/ofertas", label: "Ofertas" },
   { to: "/perfil", label: "Perfil" },
-] as const;
+];
 
 export function TopNav() {
   return (
