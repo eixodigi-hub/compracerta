@@ -37,6 +37,19 @@ function PerfilPage() {
     },
   });
 
+  const isAdmin = useQuery({
+    queryKey: ["is-admin", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("has_role", {
+        _user_id: user!.id,
+        _role: "admin",
+      });
+      if (error) throw error;
+      return !!data;
+    },
+  });
+
   async function handleSignOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
