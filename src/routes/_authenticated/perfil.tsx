@@ -90,6 +90,17 @@ function PerfilPage() {
           </p>
         </Card>
       </div>
+
+      {isAdmin.data && (
+        <div className="mt-6">
+          <Button asChild variant="default">
+            <Link to="/admin">
+              <ShieldAlert className="mr-2 h-4 w-4" aria-hidden="true" />
+              Acessar painel administrativo
+            </Link>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
