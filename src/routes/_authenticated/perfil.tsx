@@ -1,8 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { LogOut, User as UserIcon, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -34,6 +34,19 @@ function PerfilPage() {
         .maybeSingle();
       if (error) throw error;
       return data;
+    },
+  });
+
+  const isAdmin = useQuery({
+    queryKey: ["is-admin", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("has_role", {
+        _user_id: user!.id,
+        _role: "admin",
+      });
+      if (error) throw error;
+      return !!data;
     },
   });
 
@@ -77,6 +90,17 @@ function PerfilPage() {
           </p>
         </Card>
       </div>
+
+      {isAdmin.data && (
+        <div className="mt-6">
+          <Button asChild variant="default">
+            <Link to="/admin">
+              <ShieldAlert className="mr-2 h-4 w-4" aria-hidden="true" />
+              Acessar painel administrativo
+            </Link>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
