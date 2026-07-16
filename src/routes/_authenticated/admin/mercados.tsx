@@ -316,6 +316,7 @@ function MercadosPage() {
               <thead className="text-left text-muted-foreground">
                 <tr>
                   <th className="py-2 pr-4">Nome</th>
+                  <th className="py-2 pr-4">store_id</th>
                   <th className="py-2 pr-4">Slug</th>
                   <th className="py-2 pr-4">Site</th>
                   <th className="py-2 pr-4">Última sincronização</th>
@@ -327,6 +328,23 @@ function MercadosPage() {
                 {data?.map((s) => (
                   <tr key={s.id} className="border-t">
                     <td className="py-2 pr-4 font-medium">{s.name}</td>
+                    <td className="py-2 pr-4">
+                      <div className="flex items-center gap-1">
+                        <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{s.id.slice(0, 8)}…</code>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0"
+                          onClick={() => {
+                            navigator.clipboard.writeText(s.id);
+                            toast.success("store_id copiado");
+                          }}
+                        >
+                          <Copy className="h-3 w-3" />
+                          <span className="sr-only">Copiar store_id</span>
+                        </Button>
+                      </div>
+                    </td>
                     <td className="py-2 pr-4 text-muted-foreground">{s.slug}</td>
                     <td className="py-2 pr-4">
                       {s.website_url ? (
@@ -362,7 +380,7 @@ function MercadosPage() {
                 ))}
                 {data?.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="py-6 text-center text-muted-foreground">
+                    <td colSpan={7} className="py-6 text-center text-muted-foreground">
                       Nenhum mercado encontrado.
                     </td>
                   </tr>
