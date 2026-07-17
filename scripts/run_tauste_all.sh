@@ -25,15 +25,36 @@ done
 mkdir -p logs
 
 LOCK_DIR=".tauste_collection.lock"
+LOCK_PID_FILE="$LOCK_DIR/pid"
 
 if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-  echo "ERRO: já existe uma coleta em execução."
-  echo "Caso nenhuma coleta esteja rodando, remova o bloqueio com:"
-  echo "rm -rf $LOCK_DIR"
-  exit 1
+  OLD_PID=""
+
+  if [[ -f "$LOCK_PID_FILE" ]]; then
+    OLD_PID="$(cat "$LOCK_PID_FILE" 2>/dev/null || true)"
+  fi
+
+  if [[ -n "$OLD_PID" ]] && kill -0 "$OLD_PID" 2>/dev/null; then
+    echo "ERRO: já existe uma coleta em execução, PID $OLD_PID."
+    exit 1
+  fi
+
+  echo "AVISO: bloqueio antigo encontrado. Removendo automaticamente."
+  rm -rf "$LOCK_DIR"
+
+  if ! mkdir "$LOCK_DIR"; then
+    echo "ERRO: não foi possível recriar o bloqueio."
+    exit 1
+  fi
 fi
 
-trap 'rm -rf "$LOCK_DIR"' EXIT INT TERM
+echo "$$" > "$LOCK_PID_FILE"
+
+cleanup_lock() {
+  rm -rf "$LOCK_DIR"
+}
+
+trap cleanup_lock EXIT INT TERM HUP
 
 if [[ -x ".venv/bin/python" ]]; then
   PYTHON_BIN=".venv/bin/python"
