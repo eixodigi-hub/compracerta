@@ -30,10 +30,18 @@ function formatUpdated(iso: string | null) {
 }
 
 function Index() {
+  const navigate = useNavigate();
+  const [q, setQ] = useState("");
   const categories = useQuery(categoriesQuery);
   const markets = useQuery(marketsQuery);
   const offers = useQuery(topOffersQuery);
   const lastUpdated = useQuery(lastUpdatedQuery);
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const term = q.trim();
+    navigate({ to: "/pesquisar", search: { q: term, category: "", brand: "", store: "", available: false, offers: false, min: 0, max: 0, sort: "price_asc" } });
+  }
 
   const offerCards: Offer[] =
     offers.data?.map((o) => {
