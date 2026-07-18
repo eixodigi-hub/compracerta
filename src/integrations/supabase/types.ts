@@ -94,6 +94,56 @@ export type Database = {
         }
         Relationships: []
       }
+      category_sync_runs: {
+        Row: {
+          category_key: string
+          collected_at: string | null
+          created_at: string
+          id: string
+          missed_count: number
+          restored_count: number
+          seen_count: number
+          status: string
+          store_id: string
+          sync_token: string
+          unavailable_count: number
+        }
+        Insert: {
+          category_key: string
+          collected_at?: string | null
+          created_at?: string
+          id?: string
+          missed_count?: number
+          restored_count?: number
+          seen_count?: number
+          status?: string
+          store_id: string
+          sync_token: string
+          unavailable_count?: number
+        }
+        Update: {
+          category_key?: string
+          collected_at?: string | null
+          created_at?: string
+          id?: string
+          missed_count?: number
+          restored_count?: number
+          seen_count?: number
+          status?: string
+          store_id?: string
+          sync_token?: string
+          unavailable_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_sync_runs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cities: {
         Row: {
           active: boolean
@@ -368,6 +418,47 @@ export type Database = {
           },
         ]
       }
+      store_product_collection_scopes: {
+        Row: {
+          active: boolean
+          consecutive_misses: number
+          created_at: string
+          id: string
+          last_seen_at: string | null
+          scope_key: string
+          store_product_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          consecutive_misses?: number
+          created_at?: string
+          id?: string
+          last_seen_at?: string | null
+          scope_key: string
+          store_product_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          consecutive_misses?: number
+          created_at?: string
+          id?: string
+          last_seen_at?: string | null
+          scope_key?: string
+          store_product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_product_collection_scopes_store_product_id_fkey"
+            columns: ["store_product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_products: {
         Row: {
           active: boolean
@@ -536,6 +627,16 @@ export type Database = {
         }[]
       }
       compute_list_comparison: { Args: { p_list_id: string }; Returns: Json }
+      finalize_category_sync: {
+        Args: {
+          p_category_key: string
+          p_collected_at: string
+          p_seen_external_ids: string[]
+          p_store_id: string
+          p_sync_token: string
+        }
+        Returns: Json
+      }
       get_price_history: {
         Args: { p_days?: number; p_product_id: string }
         Returns: {
