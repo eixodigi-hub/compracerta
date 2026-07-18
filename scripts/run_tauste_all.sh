@@ -76,6 +76,16 @@ CATEGORIES=(
   refrigerante
   papel_higienico
   detergente
+  farinha
+  sal
+  biscoitos
+  conservas_enlatados
+  creme_de_leite
+  leite_condensado
+  azeite_vinagre
+  creme_dental
+  fraldas
+  iogurtes
 )
 
 PAGES="${PAGES:-1}"

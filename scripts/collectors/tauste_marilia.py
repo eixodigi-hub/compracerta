@@ -71,6 +71,16 @@ CATEGORIES: dict[str, str] = {
     "refrigerante": "bebidas-n-o-alcoolicas/sucos-refrescos-e-refrigerantes/refrigerantes.html",
     "papel_higienico": "higiene-e-beleza/higiene/papel-higi-nico.html",
     "detergente": "limpeza/cozinha/lava-louca.html",
+    "farinha": "mercearia/alimentos-basicos/farinha.html",
+    "sal": "mercearia/alimentos-basicos/sal.html",
+    "biscoitos": "mercearia/biscoitos-e-salgadinhos/biscoitos.html",
+    "conservas_enlatados": "mercearia/conservas-e-enlatados.html",
+    "creme_de_leite": "mercearia/doces-e-sobremesas/creme-de-leite.html",
+    "leite_condensado": "mercearia/doces-e-sobremesas/leite-condensado.html",
+    "azeite_vinagre": "mercearia/temperos-e-condimentos/azeite-e-vinagre.html",
+    "creme_dental": "higiene-e-beleza/oral-care/creme-dental.html",
+    "fraldas": "higiene-e-beleza/beb-s/fraldas.html",
+    "iogurtes": "cafe-da-manh/frios-e-iogurtes/iogurtes.html",
     # obs.: o Tauste não expõe uma categoria única chamada "Detergente".
     # "lava-louca" agrupa detergentes de louça; ajuste caso queira outro recorte.
 }

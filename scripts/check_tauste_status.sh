@@ -51,7 +51,7 @@ fi
 echo ""
 echo "Falhas recentes encontradas nos logs:"
 
-RECENT_LOGS="$(ls -t logs/tauste_*.log 2>/dev/null | head -10)"
+RECENT_LOGS="$(ls -t logs/tauste_*.log 2>/dev/null | head -25)"
 
 if [[ -n "$RECENT_LOGS" ]]; then
   RESULTS="$(grep -hEi \
