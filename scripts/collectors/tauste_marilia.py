@@ -374,22 +374,78 @@ def collect_category(
 ) -> list[Produto]:
     url_base = urljoin(BASE_URL, path)
     produtos: list[Produto] = []
+    seen_ids: set[str] = set()
     page = 1
+
     while page <= max_pages:
         url = url_base if page == 1 else f"{url_base}?p={page}"
         log.info("[%s] página %d -> %s", key, page, url)
+
         html = get_html(session, url, delay)
         page_items = parse_category_page(html, page, key)
-        log.info("[%s] página %d: %d produtos", key, page, len(page_items))
+
+        log.info(
+            "[%s] página %d: %d produtos",
+            key,
+            page,
+            len(page_items),
+        )
+
         if not page_items:
+            log.info(
+                "[%s] página %d vazia. Encerrando categoria.",
+                key,
+                page,
+            )
             break
-        produtos.extend(page_items)
-        # Detecta próxima página.
+
+        new_items = [
+            produto
+            for produto in page_items
+            if produto.external_id not in seen_ids
+        ]
+
+        repeated_count = len(page_items) - len(new_items)
+
+        if repeated_count:
+            log.info(
+                "[%s] página %d: %d produtos repetidos ignorados.",
+                key,
+                page,
+                repeated_count,
+            )
+
+        if not new_items:
+            log.info(
+                "[%s] página %d sem produtos novos. "
+                "Encerrando categoria.",
+                key,
+                page,
+            )
+            break
+
+        produtos.extend(new_items)
+        seen_ids.update(
+            produto.external_id
+            for produto in new_items
+        )
+
         soup = BeautifulSoup(html, "lxml")
-        next_link = soup.select_one(".pages-item-next a, a.action.next")
+        next_link = soup.select_one(
+            ".pages-item-next a, a.action.next"
+        )
+
         if not next_link:
+            log.info(
+                "[%s] página %d sem próxima página. "
+                "Encerrando categoria.",
+                key,
+                page,
+            )
             break
+
         page += 1
+
     return produtos
 
 
