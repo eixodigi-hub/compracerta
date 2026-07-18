@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ImageOff, Store, Clock, GitCompareArrows, Plus } from "lucide-react";
+import { ImageOff, Store, Clock, GitCompareArrows, Plus, Trophy } from "lucide-react";
 import type { SearchProductRow } from "@/lib/search-queries";
 
 function currency(v: number | null | undefined) {
@@ -30,6 +30,7 @@ export function ProductCard({
 }) {
   const qty = formatQty(product.quantity, product.unit);
   const discount = Math.round(product.max_discount_pct);
+  const detailLink = product.is_canonical ? "/produto/$id" : undefined;
 
   return (
     <Card className="flex flex-col gap-3 overflow-hidden p-4 transition-shadow hover:shadow-md">
@@ -48,9 +49,19 @@ export function ProductCard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start gap-1.5">
-            <h3 className="line-clamp-2 flex-1 text-sm font-semibold leading-tight">
-              {product.name}
-            </h3>
+            {product.is_canonical ? (
+              <Link
+                to="/produto/$id"
+                params={{ id: product.id }}
+                className="line-clamp-2 flex-1 text-sm font-semibold leading-tight hover:underline"
+              >
+                {product.name}
+              </Link>
+            ) : (
+              <h3 className="line-clamp-2 flex-1 text-sm font-semibold leading-tight">
+                {product.name}
+              </h3>
+            )}
             {product.has_promotion && discount > 0 && (
               <Badge className="bg-promo text-promo-foreground hover:bg-promo">
                 -{discount}%
@@ -61,6 +72,9 @@ export function ProductCard({
             {product.brand ?? "Sem marca"}
             {qty ? ` · ${qty}` : ""}
           </p>
+          {!product.is_canonical && (
+            <p className="mt-1 text-xs text-muted-foreground">Produto ainda não catalogado</p>
+          )}
         </div>
       </div>
 
@@ -88,18 +102,57 @@ export function ProductCard({
         </div>
       </div>
 
+      <div className="space-y-2 rounded-lg border border-border bg-secondary/30 p-2.5">
+        {product.offers.map((offer) => (
+          <div
+            key={offer.store_product_id}
+            className="flex items-start justify-between gap-3 rounded-md bg-card px-2.5 py-2"
+          >
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <p className="truncate text-xs font-semibold">{offer.store_name}</p>
+                {offer.is_lowest && (
+                  <Badge variant="secondary" className="gap-1 border-primary/20 bg-primary-soft text-primary">
+                    <Trophy className="h-3 w-3" aria-hidden="true" />
+                    menor preço
+                  </Badge>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Normal: {currency(offer.regular_price)}
+                {offer.promotional_price != null ? ` · Promo: ${currency(offer.promotional_price)}` : ""}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Coleta: {formatUpdated(offer.collected_at)}
+              </p>
+            </div>
+            <p className="shrink-0 text-right text-sm font-bold text-primary">
+              {currency(offer.effective_price)}
+            </p>
+          </div>
+        ))}
+      </div>
+
       <div className="flex gap-2">
-        <Button asChild size="sm" className="flex-1">
-          <Link to="/produto/$id" params={{ id: product.id }}>
+        {detailLink ? (
+          <Button asChild size="sm" className="flex-1">
+            <Link to="/produto/$id" params={{ id: product.id }}>
+              <GitCompareArrows className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              Comparar preços
+            </Link>
+          </Button>
+        ) : (
+          <Button size="sm" className="flex-1" disabled>
             <GitCompareArrows className="mr-1.5 h-4 w-4" aria-hidden="true" />
-            Comparar preços
-          </Link>
-        </Button>
+            Aguardando catálogo
+          </Button>
+        )}
         <Button
           type="button"
           size="sm"
           variant="outline"
           onClick={() => onAddToList?.(product)}
+          disabled={!product.is_canonical}
           aria-label="Adicionar à lista"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />

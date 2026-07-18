@@ -741,11 +741,13 @@ export type Database = {
           has_promotion: boolean
           id: string
           image_url: string
+          is_canonical: boolean
           last_updated: string
           market_count: number
           max_discount_pct: number
           min_price: number
           name: string
+          offers: Json
           quantity: number
           reference_price: number
           unit: string
