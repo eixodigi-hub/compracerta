@@ -27,6 +27,7 @@ import sys
 import time
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
+from uuid import uuid4
 from typing import Iterable
 from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
@@ -43,6 +44,11 @@ DEFAULT_INGEST_URL = (
     "https://project--0848491c-2052-4001-80d7-0f52822c8772.lovable.app"
     "/api/public/ingest-products"
 )
+DEFAULT_FINALIZE_URL = (
+    "https://marilia-price-finder.lovable.app"
+    "/api/public/finalize-category-sync"
+)
+
 USER_AGENT = (
     "Mozilla/5.0 (compatible; CompraCertaMariliaBot/0.1; "
     "+https://compracertamarilia.local/bot; projeto Compra Certa Marília)"
@@ -108,7 +114,7 @@ class Produto:
 
     def to_payload(self) -> dict:
         d = asdict(self)
-        d.pop("origin_category", None)
+        d["source_category"] = d.pop("origin_category", None)
         d.pop("origin_page", None)
         return d
 
@@ -371,7 +377,7 @@ def collect_category(
     path: str,
     max_pages: int,
     delay: float,
-) -> list[Produto]:
+) -> tuple[list[Produto], bool]:
     url_base = urljoin(BASE_URL, path)
     produtos: list[Produto] = []
     seen_ids: set[str] = set()
@@ -393,11 +399,11 @@ def collect_category(
 
         if not page_items:
             log.info(
-                "[%s] página %d vazia. Encerrando categoria.",
+                "[%s] página %d vazia. Categoria concluída.",
                 key,
                 page,
             )
-            break
+            return produtos, True
 
         new_items = [
             produto
@@ -418,11 +424,11 @@ def collect_category(
         if not new_items:
             log.info(
                 "[%s] página %d sem produtos novos. "
-                "Encerrando categoria.",
+                "Categoria concluída.",
                 key,
                 page,
             )
-            break
+            return produtos, True
 
         produtos.extend(new_items)
         seen_ids.update(
@@ -438,15 +444,21 @@ def collect_category(
         if not next_link:
             log.info(
                 "[%s] página %d sem próxima página. "
-                "Encerrando categoria.",
+                "Categoria concluída.",
                 key,
                 page,
             )
-            break
+            return produtos, True
 
         page += 1
 
-    return produtos
+    log.warning(
+        "[%s] limite de %d páginas atingido, mas ainda havia "
+        "indicação de próxima página. A categoria não será finalizada.",
+        key,
+        max_pages,
+    )
+    return produtos, False
 
 
 # ---------------------------------------------------------------------------
@@ -455,9 +467,15 @@ def collect_category(
 
 
 def dedupe(produtos: Iterable[Produto]) -> list[Produto]:
-    seen: dict[str, Produto] = {}
-    for p in produtos:
-        seen[p.external_id] = p  # mantém a última ocorrência
+    seen: dict[tuple[str, str], Produto] = {}
+
+    for produto in produtos:
+        key = (
+            produto.origin_category,
+            produto.external_id,
+        )
+        seen[key] = produto
+
     return list(seen.values())
 
 
@@ -503,6 +521,65 @@ def send_batches(
             counts["falhas"] += 1
             log.error("Falha ao enviar lote: %s", e)
     return counts
+
+
+def finalize_category_sync(
+    finalize_url: str,
+    store_id: str,
+    secret: str,
+    category_key: str,
+    produtos: list[Produto],
+) -> bool:
+    seen_external_ids = sorted(
+        {
+            produto.external_id
+            for produto in produtos
+            if produto.origin_category == category_key
+        }
+    )
+
+    if not seen_external_ids:
+        log.warning(
+            "[%s] finalização ignorada porque nenhum produto "
+            "válido foi coletado.",
+            category_key,
+        )
+        return False
+
+    payload = {
+        "store_id": store_id,
+        "category_key": category_key,
+        "seen_external_ids": seen_external_ids,
+        "sync_token": f"{category_key}-{uuid4()}",
+        "collected_at": datetime.now(TZ_SP).isoformat(),
+    }
+
+    try:
+        response = requests.post(
+            finalize_url,
+            headers={
+                "x-ingest-secret": secret,
+                "content-type": "application/json",
+            },
+            json=payload,
+            timeout=120,
+        )
+        response.raise_for_status()
+        result = response.json()
+
+        log.info(
+            "[%s] categoria finalizada: %s",
+            category_key,
+            result,
+        )
+        return True
+    except Exception as error:  # noqa: BLE001
+        log.error(
+            "[%s] falha ao finalizar categoria: %s",
+            category_key,
+            error,
+        )
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -560,72 +637,212 @@ def main() -> int:
     )
     args = parse_args()
 
-    ingest_url = os.environ.get("INGEST_URL", DEFAULT_INGEST_URL)
+    ingest_url = os.environ.get(
+        "INGEST_URL",
+        DEFAULT_INGEST_URL,
+    )
+    finalize_url = os.environ.get(
+        "FINALIZE_CATEGORY_URL",
+        DEFAULT_FINALIZE_URL,
+    )
     store_id = os.environ.get("STORE_ID", "")
     secret = os.environ.get("INGEST_SECRET", "")
     delay = env_float("REQUEST_DELAY_SECONDS", 1.5)
 
     if not args.dry_run and (not store_id or not secret):
-        log.error("Defina STORE_ID e INGEST_SECRET no ambiente (ou use --dry-run).")
+        log.error(
+            "Defina STORE_ID e INGEST_SECRET no ambiente "
+            "(ou use --dry-run)."
+        )
         return 2
 
     cats = args.categoria or list(CATEGORIES.keys())
+
     if args.categorias_limite:
         cats = cats[: args.categorias_limite]
 
     session = build_session()
     all_products: list[Produto] = []
-    encontrados = ignorados = 0
+    category_complete: dict[str, bool] = {}
+    encontrados = 0
+    ignorados = 0
     erros_categoria = 0
 
     for key in cats:
         try:
-            items = collect_category(
-                session, key, CATEGORIES[key], args.paginas, delay
+            items, completed = collect_category(
+                session,
+                key,
+                CATEGORIES[key],
+                args.paginas,
+                delay,
             )
+            category_complete[key] = completed
             encontrados += len(items)
             all_products.extend(items)
-        except SiteRejectedError as e:
-            log.error("BLOQUEIO detectado: %s", e)
-            log.error("Encerrando execução conforme requisito de segurança.")
+        except SiteRejectedError as error:
+            log.error("BLOQUEIO detectado: %s", error)
+            log.error(
+                "Encerrando execução conforme requisito de segurança."
+            )
             return 3
-        except Exception as e:  # noqa: BLE001
+        except Exception as error:  # noqa: BLE001
+            category_complete[key] = False
             erros_categoria += 1
-            log.exception("Erro ao coletar categoria %s: %s", key, e)
+            log.exception(
+                "Erro ao coletar categoria %s: %s",
+                key,
+                error,
+            )
 
-    # Dedup e validações finais.
     antes = len(all_products)
     all_products = dedupe(all_products)
     ignorados += antes - len(all_products)
-    all_products = [p for p in all_products if p.effective_price > 0]
-    ignorados += (antes - len(all_products)) - ignorados
 
-    if args.produtos > 0:
+    antes_preco = len(all_products)
+    all_products = [
+        produto
+        for produto in all_products
+        if produto.effective_price > 0
+    ]
+    ignorados += antes_preco - len(all_products)
+
+    limited_collection = args.produtos > 0
+
+    if limited_collection:
         all_products = all_products[: args.produtos]
 
-    # Enriquecimento opcional (amostra) — apenas para novos/desconhecidos.
     conflitos: list[str] = []
+    conflict_categories: set[str] = set()
+    bad_scope_ids: set[tuple[str, str]] = set()
+
     if args.enriquecer > 0:
         amostra = all_products[: args.enriquecer]
-        log.info("Enriquecendo %d produto(s) pela página individual...", len(amostra))
-        for p in amostra:
-            _, conflito = enrich_from_product_page(session, p, delay)
+        log.info(
+            "Enriquecendo %d produto(s) pela página individual...",
+            len(amostra),
+        )
+
+        for produto in amostra:
+            _, conflito = enrich_from_product_page(
+                session,
+                produto,
+                delay,
+            )
+
             if conflito:
                 conflitos.append(conflito)
+                conflict_categories.add(
+                    produto.origin_category
+                )
+                bad_scope_ids.add(
+                    (
+                        produto.origin_category,
+                        produto.external_id,
+                    )
+                )
+
         if conflitos:
-            log.warning("Conflitos de COD detectados: %d", len(conflitos))
-            for c in conflitos:
-                log.warning("  %s", c)
-            # Remove produtos com conflito da fila de envio.
-            bad_ids = {c.split("url=")[1].split(" ")[0] for c in conflitos}
-            all_products = [p for p in all_products if p.external_id not in bad_ids]
+            log.warning(
+                "Conflitos de COD detectados: %d",
+                len(conflitos),
+            )
+
+            for conflito in conflitos:
+                log.warning("  %s", conflito)
+
+            all_products = [
+                produto
+                for produto in all_products
+                if (
+                    produto.origin_category,
+                    produto.external_id,
+                ) not in bad_scope_ids
+            ]
 
     log.info("=" * 60)
-    log.info("Resumo: encontrados=%d válidos=%d ignorados=%d categorias_com_erro=%d conflitos=%d",
-             encontrados, len(all_products), ignorados, erros_categoria, len(conflitos))
+    log.info(
+        "Resumo: encontrados=%d válidos=%d ignorados=%d "
+        "categorias_com_erro=%d conflitos=%d",
+        encontrados,
+        len(all_products),
+        ignorados,
+        erros_categoria,
+        len(conflitos),
+    )
 
-    counts = send_batches(ingest_url, store_id, secret, all_products, args.dry_run)
+    counts = send_batches(
+        ingest_url,
+        store_id,
+        secret,
+        all_products,
+        args.dry_run,
+    )
     log.info("Envio: %s", counts)
+
+    if args.dry_run:
+        log.info(
+            "DRY-RUN: nenhuma categoria será finalizada."
+        )
+        return 0
+
+    if limited_collection:
+        log.warning(
+            "Finalização ignorada porque --produtos limita "
+            "a coleta e não representa a categoria completa."
+        )
+        return 0
+
+    if counts["falhas"] > 0:
+        log.error(
+            "Finalização ignorada porque houve falha no envio "
+            "de produtos."
+        )
+        return 1
+
+    finalization_failures = 0
+
+    for key in cats:
+        produtos_categoria = [
+            produto
+            for produto in all_products
+            if produto.origin_category == key
+        ]
+
+        if not category_complete.get(key, False):
+            log.warning(
+                "[%s] finalização ignorada porque a coleta "
+                "não foi concluída.",
+                key,
+            )
+            continue
+
+        if key in conflict_categories:
+            log.warning(
+                "[%s] finalização ignorada devido a conflito "
+                "de identificação.",
+                key,
+            )
+            continue
+
+        finalized = finalize_category_sync(
+            finalize_url,
+            store_id,
+            secret,
+            key,
+            produtos_categoria,
+        )
+
+        if not finalized:
+            finalization_failures += 1
+
+    if finalization_failures:
+        log.error(
+            "Finalizações com falha: %d",
+            finalization_failures,
+        )
+        return 4
+
     return 0
 
 
