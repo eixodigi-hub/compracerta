@@ -55,7 +55,7 @@ RECENT_LOGS="$(ls -t logs/tauste_*.log 2>/dev/null | head -10)"
 
 if [[ -n "$RECENT_LOGS" ]]; then
   RESULTS="$(grep -hEi \
-    'Traceback|ERRO|FALHA|SiteRejected|HTTP 403|HTTP 429|falhas.: [1-9]' \
+    'Traceback|(^|[[:space:]])ERRO([[:space:]:]|$)|(^|[[:space:]])FALHA([[:space:]:]|$)|SiteRejected|HTTP (403|429)|categorias_com_erro=[1-9][0-9]*|conflitos=[1-9][0-9]*|errors.: [1-9][0-9]*|falhas.: [1-9][0-9]*' \
     $RECENT_LOGS 2>/dev/null || true)"
 
   if [[ -n "$RESULTS" ]]; then
