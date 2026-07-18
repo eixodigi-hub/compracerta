@@ -169,7 +169,12 @@ function Index() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {offerCards.map((o) => (
-              <OfferCard key={o.id} offer={o} />
+              <OfferCard
+                key={o.id}
+                offer={o}
+                onAddToList={handleAddToList}
+                adding={addingId === o.id}
+              />
             ))}
           </div>
         )}
