@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Search, ListChecks, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -42,9 +42,10 @@ function Index() {
   const offers = useQuery(topOffersQuery);
   const lastUpdated = useQuery(lastUpdatedQuery);
 
-  function handleSearch(e: React.FormEvent) {
+  function handleSearch(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const term = q.trim();
+    const formData = new FormData(e.currentTarget);
+    const term = String(formData.get("q") ?? "").trim();
     navigate({ to: "/pesquisar", search: { q: term, category: "", brand: "", store: "", available: false, offers: false, min: 0, max: 0, sort: "price_asc" } });
   }
 
@@ -126,6 +127,7 @@ function Index() {
                 type="search"
                 placeholder="O que você procura hoje?"
                 aria-label="O que você procura hoje?"
+                name="q"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 className="h-14 rounded-2xl border-border bg-card pl-12 text-base shadow-sm"
