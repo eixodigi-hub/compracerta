@@ -24,6 +24,9 @@ done
 
 mkdir -p logs
 
+# Limpeza automática de logs antigos
+find logs -type f -name "*.log" -mtime +30 -delete 2>/dev/null || true
+
 LOCK_DIR=".tauste_collection.lock"
 LOCK_PID_FILE="$LOCK_DIR/pid"
 
