@@ -18,6 +18,7 @@ const productSchema = z.object({
   promotion_end_at: z.string().datetime({ offset: true }).nullable().optional(),
   available: z.boolean(),
   collected_at: z.string().datetime({ offset: true }),
+  source_category: z.string().min(1).max(100).nullable().optional(),
 });
 
 const bodySchema = z.object({
@@ -151,6 +152,23 @@ export const Route = createFileRoute("/api/public/ingest-products")({
               if (error || !inserted) throw error ?? new Error("insert failed");
               storeProductId = inserted.id;
               counts.created++;
+            }
+
+            // Upsert collection scope for this source_category
+            if (p.source_category) {
+              const { error: scopeErr } = await supabaseAdmin
+                .from("store_product_collection_scopes")
+                .upsert(
+                  {
+                    store_product_id: storeProductId,
+                    scope_key: p.source_category,
+                    last_seen_at: p.collected_at,
+                    consecutive_misses: 0,
+                    active: true,
+                  },
+                  { onConflict: "store_product_id,scope_key" },
+                );
+              if (scopeErr) throw scopeErr;
             }
 
             // Fetch previous current_prices

@@ -21,6 +21,7 @@ import { Route as AuthenticatedListaRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as ApiPublicIngestProductsRouteImport } from './routes/api/public/ingest-products'
+import { Route as ApiPublicFinalizeCategorySyncRouteImport } from './routes/api/public/finalize-category-sync'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
 import { Route as AuthenticatedAdminProdutosColetadosRouteImport } from './routes/_authenticated/admin/produtos-coletados'
 import { Route as AuthenticatedAdminProdutosCanonicosRouteImport } from './routes/_authenticated/admin/produtos-canonicos'
@@ -88,6 +89,12 @@ const ApiPublicIngestProductsRoute = ApiPublicIngestProductsRouteImport.update({
   path: '/api/public/ingest-products',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicFinalizeCategorySyncRoute =
+  ApiPublicFinalizeCategorySyncRouteImport.update({
+    id: '/api/public/finalize-category-sync',
+    path: '/api/public/finalize-category-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminUsuariosRoute =
   AuthenticatedAdminUsuariosRouteImport.update({
     id: '/usuarios',
@@ -148,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/admin/produtos-canonicos': typeof AuthenticatedAdminProdutosCanonicosRoute
   '/admin/produtos-coletados': typeof AuthenticatedAdminProdutosColetadosRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/api/public/finalize-category-sync': typeof ApiPublicFinalizeCategorySyncRoute
   '/api/public/ingest-products': typeof ApiPublicIngestProductsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
@@ -167,6 +175,7 @@ export interface FileRoutesByTo {
   '/admin/produtos-canonicos': typeof AuthenticatedAdminProdutosCanonicosRoute
   '/admin/produtos-coletados': typeof AuthenticatedAdminProdutosColetadosRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/api/public/finalize-category-sync': typeof ApiPublicFinalizeCategorySyncRoute
   '/api/public/ingest-products': typeof ApiPublicIngestProductsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
@@ -189,6 +198,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/produtos-canonicos': typeof AuthenticatedAdminProdutosCanonicosRoute
   '/_authenticated/admin/produtos-coletados': typeof AuthenticatedAdminProdutosColetadosRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/api/public/finalize-category-sync': typeof ApiPublicFinalizeCategorySyncRoute
   '/api/public/ingest-products': typeof ApiPublicIngestProductsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
     | '/admin/produtos-canonicos'
     | '/admin/produtos-coletados'
     | '/admin/usuarios'
+    | '/api/public/finalize-category-sync'
     | '/api/public/ingest-products'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -230,6 +241,7 @@ export interface FileRouteTypes {
     | '/admin/produtos-canonicos'
     | '/admin/produtos-coletados'
     | '/admin/usuarios'
+    | '/api/public/finalize-category-sync'
     | '/api/public/ingest-products'
     | '/admin'
   id:
@@ -251,6 +263,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/produtos-canonicos'
     | '/_authenticated/admin/produtos-coletados'
     | '/_authenticated/admin/usuarios'
+    | '/api/public/finalize-category-sync'
     | '/api/public/ingest-products'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
@@ -263,6 +276,7 @@ export interface RootRouteChildren {
   PesquisarRoute: typeof PesquisarRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ProdutoIdRoute: typeof ProdutoIdRoute
+  ApiPublicFinalizeCategorySyncRoute: typeof ApiPublicFinalizeCategorySyncRoute
   ApiPublicIngestProductsRoute: typeof ApiPublicIngestProductsRoute
 }
 
@@ -350,6 +364,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/ingest-products'
       fullPath: '/api/public/ingest-products'
       preLoaderRoute: typeof ApiPublicIngestProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/finalize-category-sync': {
+      id: '/api/public/finalize-category-sync'
+      path: '/api/public/finalize-category-sync'
+      fullPath: '/api/public/finalize-category-sync'
+      preLoaderRoute: typeof ApiPublicFinalizeCategorySyncRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/usuarios': {
@@ -457,18 +478,9 @@ const rootRouteChildren: RootRouteChildren = {
   PesquisarRoute: PesquisarRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ProdutoIdRoute: ProdutoIdRoute,
+  ApiPublicFinalizeCategorySyncRoute: ApiPublicFinalizeCategorySyncRoute,
   ApiPublicIngestProductsRoute: ApiPublicIngestProductsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
