@@ -1,5 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Search, ListChecks, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,10 +30,18 @@ function formatUpdated(iso: string | null) {
 }
 
 function Index() {
+  const navigate = useNavigate();
+  const [q, setQ] = useState("");
   const categories = useQuery(categoriesQuery);
   const markets = useQuery(marketsQuery);
   const offers = useQuery(topOffersQuery);
   const lastUpdated = useQuery(lastUpdatedQuery);
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const term = q.trim();
+    navigate({ to: "/pesquisar", search: { q: term, category: "", brand: "", store: "", available: false, offers: false, min: 0, max: 0, sort: "price_asc" } });
+  }
 
   const offerCards: Offer[] =
     offers.data?.map((o) => {
@@ -63,17 +72,23 @@ function Index() {
             Vamos economizar na compra de hoje?
           </h1>
 
-          <form className="mt-6 flex flex-col gap-3 sm:flex-row" role="search">
+          <form className="mt-6 flex flex-col gap-3 sm:flex-row" role="search" onSubmit={handleSearch}>
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
               <Input
                 type="search"
                 placeholder="O que você procura hoje?"
                 aria-label="O que você procura hoje?"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
                 className="h-14 rounded-2xl border-border bg-card pl-12 text-base shadow-sm"
               />
             </div>
-            <Button asChild size="lg" className="h-14 rounded-2xl px-6 text-base font-semibold shadow-sm">
+            <Button type="submit" size="lg" className="h-14 rounded-2xl px-6 text-base font-semibold shadow-sm">
+              <Search className="mr-2 h-5 w-5" aria-hidden="true" />
+              Pesquisar
+            </Button>
+            <Button asChild variant="outline" size="lg" className="h-14 rounded-2xl px-6 text-base font-semibold shadow-sm">
               <Link to="/lista">
                 <ListChecks className="mr-2 h-5 w-5" aria-hidden="true" />
                 Comparar minha lista
