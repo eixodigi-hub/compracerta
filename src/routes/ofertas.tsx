@@ -83,9 +83,9 @@ function OfertasPage() {
     queryKey: ["offers-list", store, category, brand, min_discount],
     queryFn: async (): Promise<OfferRow[]> => {
       const { data, error } = await supabase.rpc("list_current_offers", {
-        store_id_filter: store || null,
-        category_slug: category || null,
-        brand_filter: brand || null,
+        store_id_filter: store || undefined,
+        category_slug: category || undefined,
+        brand_filter: brand || undefined,
         min_discount: Number.isFinite(min_discount) ? Math.max(0, min_discount) : 0,
       });
       if (error) throw error;
