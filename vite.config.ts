@@ -9,9 +9,9 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 export default defineConfig({
   vite: {
     define: {
-      "process.env.SUPABASE_URL": JSON.stringify("https://scgzlkcxljmkkzctrxrw.supabase.co"),
+      "process.env.SUPABASE_URL": JSON.stringify("https://mxldzvzsdexwtzfnfqzo.supabase.co"),
       "process.env.SUPABASE_PUBLISHABLE_KEY": JSON.stringify(
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjZ3psa2N4bGpta2t6Y3RyeHJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNDU4NzIsImV4cCI6MjA5OTcyMTg3Mn0._dTIwMZ1vW0_Hrr2sY-pvfvBLMiRUK9ZG29fNAdeH4U",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bGR6dnpzZGV4d3R6Zm5mcXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NjM0MjIsImV4cCI6MjEwNDAzOTQyMn0.bohWC7ASGdWieHtBsNgocFdY1t9IOvA5qD0rWCBnhCo",
       ),
     },
   },
