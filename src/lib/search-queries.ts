@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { queryOptions } from "@tanstack/react-query";
 
-export type SortBy = "price_asc" | "discount_desc" | "name_asc" | "recent";
+export type SortBy = "relevance" | "price_asc" | "discount_desc" | "name_asc" | "recent";
 
 export type SearchFilters = {
   q?: string;

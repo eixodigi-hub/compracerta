@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -57,27 +57,65 @@ export const Route = createFileRoute("/pesquisar")({
 });
 
 const SORT_LABEL: Record<SortBy, string> = {
+  relevance: "Relevância",
   price_asc: "Menor preço",
   discount_desc: "Maior desconto",
   name_asc: "Nome (A-Z)",
   recent: "Mais recente",
 };
 
+const SORT_KEYS = ["relevance", "price_asc", "discount_desc", "name_asc", "recent"] as const;
+
+// Busca ao digitar: espera o usuário parar de digitar antes de refazer a
+// busca, pra não disparar uma consulta a cada tecla.
+const LIVE_SEARCH_DEBOUNCE_MS = 350;
+
 function PesquisarPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/pesquisar" });
   const [qDraft, setQDraft] = useState(search.q);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  function applyQuery(nextQuery: string) {
+    navigate({
+      search: (prev: any) => ({
+        ...prev,
+        q: nextQuery,
+        // Pesquisar por texto é sobre achar o produto certo primeiro —
+        // troca pra ordenação por relevância automaticamente. Limpar a
+        // busca volta pro padrão de menor preço.
+        sort: nextQuery ? "relevance" : prev.sort === "relevance" ? "price_asc" : prev.sort,
+      }),
+      replace: true,
+    });
+  }
 
   function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     const formData = new FormData(event.currentTarget);
-    const nextQuery = String(formData.get("q") ?? "").trim();
-    navigate({ search: (prev: any) => ({ ...prev, q: nextQuery }), replace: true });
+    applyQuery(String(formData.get("q") ?? "").trim());
   }
 
-  const sortBy = (["price_asc", "discount_desc", "name_asc", "recent"] as const).includes(
-    search.sort as SortBy,
-  )
+  function handleQueryChange(value: string) {
+    setQDraft(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => applyQuery(value.trim()), LIVE_SEARCH_DEBOUNCE_MS);
+  }
+
+  function clearQuery() {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setQDraft("");
+    applyQuery("");
+  }
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const sortBy = (SORT_KEYS as readonly string[]).includes(search.sort)
     ? (search.sort as SortBy)
     : "price_asc";
 
@@ -141,10 +179,20 @@ function PesquisarPage() {
             placeholder="Nome, marca ou código de barras"
             aria-label="Pesquisar produto"
             name="q"
-            className="pl-9"
+            className="pl-9 pr-8"
             value={qDraft}
-            onChange={(e) => setQDraft(e.target.value)}
+            onChange={(e) => handleQueryChange(e.target.value)}
           />
+          {qDraft && (
+            <button
+              type="button"
+              onClick={clearQuery}
+              aria-label="Limpar pesquisa"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
         </div>
 
         <Button type="submit" className="shrink-0">
