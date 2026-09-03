@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { timingSafeEqual } from "crypto";
+import { SOURCE_CATEGORY_TO_SLUG } from "@/lib/source-category-map";
 
 const productSchema = z.object({
   external_id: z.string().min(1).max(200),
@@ -94,6 +95,11 @@ export const Route = createFileRoute("/api/public/ingest-products")({
         const counts = { created: 0, updated: 0, skipped: 0, errors: 0 };
         const errorSamples: Array<{ external_id: string; message: string }> = [];
 
+        const { data: categoryRows } = await supabaseAdmin
+          .from("categories")
+          .select("id, slug");
+        const categoryIdBySlug = new Map((categoryRows ?? []).map((c) => [c.slug, c.id]));
+
         for (const p of products) {
           try {
             // Validate price logic
@@ -155,12 +161,34 @@ export const Route = createFileRoute("/api/public/ingest-products")({
             // tiver uma — por código de barras, por similaridade de
             // nome, ou criando um canônico novo. Nunca deve derrubar a
             // atualização de preço em si.
-            if (!existing?.canonical_product_id) {
-              const { error: matchErr } = await supabaseAdmin.rpc("auto_link_or_create_canonical", {
-                p_store_product_id: storeProductId,
-              });
+            let canonicalProductId = existing?.canonical_product_id ?? null;
+            if (!canonicalProductId) {
+              const { data: matchData, error: matchErr } = await supabaseAdmin.rpc(
+                "auto_link_or_create_canonical",
+                { p_store_product_id: storeProductId },
+              );
               if (matchErr) {
                 console.error("auto_link_or_create_canonical failed", p.external_id, matchErr);
+              } else {
+                canonicalProductId = matchData?.[0]?.canonical_product_id ?? null;
+              }
+            }
+
+            // Preenche a categoria do produto canônico a partir da categoria
+            // bruta do coletor, se ainda não tiver uma. Nunca deve derrubar
+            // a atualização de preço em si.
+            if (canonicalProductId && p.source_category) {
+              const categorySlug = SOURCE_CATEGORY_TO_SLUG[p.source_category];
+              const categoryId = categorySlug ? categoryIdBySlug.get(categorySlug) : undefined;
+              if (categoryId) {
+                const { error: categoryErr } = await supabaseAdmin
+                  .from("canonical_products")
+                  .update({ category_id: categoryId })
+                  .eq("id", canonicalProductId)
+                  .is("category_id", null);
+                if (categoryErr) {
+                  console.error("category assignment failed", p.external_id, categoryErr);
+                }
               }
             }
 
