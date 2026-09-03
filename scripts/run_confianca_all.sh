@@ -3,8 +3,13 @@
 set -u
 set -o pipefail
 
-PROJECT_DIR="$HOME/Projects/compra-certa-mar-lia"
-PYTHON="$PROJECT_DIR/.venv/bin/python"
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [[ -x "$PROJECT_DIR/.venv/bin/python" ]]; then
+    PYTHON="$PROJECT_DIR/.venv/bin/python"
+else
+    PYTHON="python3"
+fi
 
 LOG_DIR="$PROJECT_DIR/logs"
 LOCK_DIR="$PROJECT_DIR/.confianca_collection.lock"
