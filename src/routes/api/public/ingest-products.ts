@@ -79,7 +79,18 @@ export const Route = createFileRoute("/api/public/ingest-products")({
           .eq("id", store_id)
           .maybeSingle();
         if (storeErr || !store) {
-          return json({ error: "Unknown store" }, 404);
+          return json(
+            {
+              error: "Unknown store",
+              debug: {
+                storeErr: storeErr ? { message: storeErr.message, code: storeErr.code, details: storeErr.details, hint: storeErr.hint } : null,
+                urlPrefix: (process.env.SUPABASE_URL || "").slice(0, 30),
+                keyLen: (process.env.SUPABASE_SERVICE_ROLE_KEY || "").length,
+                keyPrefix: (process.env.SUPABASE_SERVICE_ROLE_KEY || "").slice(0, 15),
+              },
+            },
+            404,
+          );
         }
 
         const { data: run, error: runErr } = await supabaseAdmin
