@@ -264,17 +264,24 @@ def main() -> int:
             "ids_collected diferente do total de referência"
         )
 
-    if products_normalized != reference_total:
+    # products_normalized pode ser um pouco menor que reference_total
+    # — mesma tolerância a produtos sem preço/sku/id aplicada em
+    # confianca_full_ingest.py. A partir daqui ele vira a referência
+    # do que deveria ter sido de fato enviado e finalizado.
+    if (
+        not isinstance(products_normalized, int)
+        or products_normalized <= 0
+    ):
         errors.append(
-            "products_normalized diferente do total de referência"
+            f"products_normalized inválido: {products_normalized}"
         )
 
-    if products_expected != reference_total:
+    if products_expected != products_normalized:
         errors.append(
             "products_expected da ingestão está incorreto"
         )
 
-    if products_sent != reference_total:
+    if products_sent != products_normalized:
         errors.append(
             "products_sent da ingestão está incorreto"
         )
@@ -284,7 +291,7 @@ def main() -> int:
             f"ingestão possui falhas: {batch_failures}"
         )
 
-    if len(seen_external_ids) != reference_total:
+    if len(seen_external_ids) != products_normalized:
         errors.append(
             "quantidade de IDs para finalização incorreta: "
             f"{len(seen_external_ids)}"

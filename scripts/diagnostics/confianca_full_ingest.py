@@ -284,17 +284,12 @@ def validate_preview(
             "products_received diferente do total de referência"
         )
 
-    if products_normalized != reference_total:
-        errors.append(
-            "products_normalized diferente do total de referência"
-        )
-
-    if not isinstance(products, list):
-        errors.append("campo products inválido")
-    elif len(products) != reference_total:
-        errors.append(
-            f"quantidade no array products: {len(products)}"
-        )
+    # Uma pequena parcela de produtos pode legitimamente vir sem
+    # preço/sku/id na própria fonte — isso não é sinal de coleta
+    # quebrada, e bloquear a categoria inteira por causa de 1 ou 2
+    # itens ruins descartava milhares de produtos bons. Tolera uma
+    # pequena perda; só bloqueia se for desproporcional.
+    skipped_total = 0
 
     if isinstance(skipped, dict):
         skipped_total = sum(
@@ -302,13 +297,36 @@ def validate_preview(
             for value in skipped.values()
             if isinstance(value, int)
         )
-
-        if skipped_total != 0:
-            errors.append(
-                f"produtos ignorados: {skipped}"
-            )
     else:
         errors.append("campo skipped inválido")
+
+    if isinstance(reference_total, int) and reference_total > 0:
+        max_allowed_skip = max(5, round(reference_total * 0.02))
+
+        if skipped_total > max_allowed_skip:
+            errors.append(
+                "produtos ignorados acima do tolerado "
+                f"(máx {max_allowed_skip}): {skipped}"
+            )
+
+    expected_normalized = (
+        reference_total - skipped_total
+        if isinstance(reference_total, int)
+        else None
+    )
+
+    if products_normalized != expected_normalized:
+        errors.append(
+            "products_normalized não bate com "
+            "coletados menos ignorados"
+        )
+
+    if not isinstance(products, list):
+        errors.append("campo products inválido")
+    elif len(products) != products_normalized:
+        errors.append(
+            f"quantidade no array products: {len(products)}"
+        )
 
     ids: list[str] = []
 

@@ -626,6 +626,14 @@ export type Database = {
           unit: string
         }[]
       }
+      auto_link_or_create_canonical: {
+        Args: { p_store_product_id: string }
+        Returns: {
+          canonical_product_id: string
+          match_type: string
+          score: number
+        }[]
+      }
       compute_list_comparison: { Args: { p_list_id: string }; Returns: Json }
       finalize_category_sync: {
         Args: {

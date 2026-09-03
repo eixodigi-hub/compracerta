@@ -97,10 +97,7 @@ export const Route = createFileRoute("/api/public/ingest-products")({
         for (const p of products) {
           try {
             // Validate price logic
-            if (
-              p.promotional_price != null &&
-              p.promotional_price > p.regular_price
-            ) {
+            if (p.promotional_price != null && p.promotional_price > p.regular_price) {
               throw new Error("promotional_price must be <= regular_price");
             }
             const promoActive =
@@ -114,7 +111,7 @@ export const Route = createFileRoute("/api/public/ingest-products")({
             // Upsert store_product by (store_id, external_id)
             const { data: existing } = await supabaseAdmin
               .from("store_products")
-              .select("id")
+              .select("id, canonical_product_id")
               .eq("store_id", store_id)
               .eq("external_id", p.external_id)
               .maybeSingle();
@@ -154,6 +151,19 @@ export const Route = createFileRoute("/api/public/ingest-products")({
               counts.created++;
             }
 
+            // Associação automática ao produto canônico, se ainda não
+            // tiver uma — por código de barras, por similaridade de
+            // nome, ou criando um canônico novo. Nunca deve derrubar a
+            // atualização de preço em si.
+            if (!existing?.canonical_product_id) {
+              const { error: matchErr } = await supabaseAdmin.rpc("auto_link_or_create_canonical", {
+                p_store_product_id: storeProductId,
+              });
+              if (matchErr) {
+                console.error("auto_link_or_create_canonical failed", p.external_id, matchErr);
+              }
+            }
+
             // Upsert collection scope for this source_category
             if (p.source_category) {
               const { error: scopeErr } = await supabaseAdmin
@@ -174,7 +184,9 @@ export const Route = createFileRoute("/api/public/ingest-products")({
             // Fetch previous current_prices
             const { data: prev } = await supabaseAdmin
               .from("current_prices")
-              .select("regular_price, promotional_price, effective_price, in_stock, promotion_end_at")
+              .select(
+                "regular_price, promotional_price, effective_price, in_stock, promotion_end_at",
+              )
               .eq("store_product_id", storeProductId)
               .maybeSingle();
 
@@ -202,16 +214,14 @@ export const Route = createFileRoute("/api/public/ingest-products")({
             if (cpErr) throw cpErr;
 
             if (changed) {
-              const { error: phErr } = await supabaseAdmin
-                .from("price_history")
-                .insert({
-                  store_product_id: storeProductId,
-                  regular_price: p.regular_price,
-                  promotional_price: p.promotional_price ?? null,
-                  effective_price: effective,
-                  in_stock: p.available,
-                  collected_at: p.collected_at,
-                });
+              const { error: phErr } = await supabaseAdmin.from("price_history").insert({
+                store_product_id: storeProductId,
+                regular_price: p.regular_price,
+                promotional_price: p.promotional_price ?? null,
+                effective_price: effective,
+                in_stock: p.available,
+                collected_at: p.collected_at,
+              });
               if (phErr) throw phErr;
             } else {
               counts.skipped++;
@@ -228,8 +238,7 @@ export const Route = createFileRoute("/api/public/ingest-products")({
         }
 
         const anySuccess = counts.errors < products.length;
-        const finalStatus =
-          counts.errors === 0 ? "success" : anySuccess ? "partial" : "failed";
+        const finalStatus = counts.errors === 0 ? "success" : anySuccess ? "partial" : "failed";
 
         await supabaseAdmin
           .from("ingestion_runs")

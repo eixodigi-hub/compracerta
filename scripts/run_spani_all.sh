@@ -82,7 +82,11 @@ CATEGORIES=(
   perfumaria_higiene
 )
 
-PAGES="${PAGES:-60}"
+
+# Var própria (não a PAGES genérica, que o Tauste usa e no .env local
+# está ajustada para 20 — baixo demais para os departamentos maiores
+# do Spani, que passam de 30 páginas).
+PAGES="${SPANI_PAGES:-60}"
 CATEGORY_DELAY="${CATEGORY_DELAY:-8}"
 
 START_TIME="$(date '+%Y-%m-%d %H:%M:%S')"

@@ -47,6 +47,7 @@ logs/
 .collector_state/
 .tauste_collection.lock/
 .confianca_collection.lock/
+.spani_collection.lock/
 
 # Backups locais de scripts
 *.bak_*
