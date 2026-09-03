@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -68,16 +68,12 @@ function PesquisarPage() {
   const navigate = useNavigate({ from: "/pesquisar" });
   const [qDraft, setQDraft] = useState(search.q);
 
-  // Debounce free-text search into the URL.
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (qDraft !== search.q) {
-        navigate({ search: (prev: any) => ({ ...prev, q: qDraft }), replace: true });
-      }
-    }, 300);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qDraft]);
+  function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const nextQuery = String(formData.get("q") ?? "").trim();
+    navigate({ search: (prev: any) => ({ ...prev, q: nextQuery }), replace: true });
+  }
 
   const sortBy = (["price_asc", "discount_desc", "name_asc", "recent"] as const).includes(
     search.sort as SortBy,
@@ -134,7 +130,7 @@ function PesquisarPage() {
         Encontre um produto e veja onde ele está mais barato em Marília.
       </p>
 
-      <div className="mt-6 flex gap-2">
+      <form className="mt-6 flex gap-2" role="search" onSubmit={handleSearchSubmit}>
         <div className="relative flex-1">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -144,11 +140,17 @@ function PesquisarPage() {
             type="search"
             placeholder="Nome, marca ou código de barras"
             aria-label="Pesquisar produto"
+            name="q"
             className="pl-9"
             value={qDraft}
             onChange={(e) => setQDraft(e.target.value)}
           />
         </div>
+
+        <Button type="submit" className="shrink-0">
+          <Search className="mr-1.5 h-4 w-4" aria-hidden="true" />
+          Buscar
+        </Button>
 
         <Sheet>
           <SheetTrigger asChild>
@@ -297,7 +299,7 @@ function PesquisarPage() {
             </div>
           </SheetContent>
         </Sheet>
-      </div>
+      </form>
 
       {/* Categories quick pills */}
       <div className="mt-4 flex flex-wrap gap-2">

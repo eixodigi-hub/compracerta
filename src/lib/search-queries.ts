@@ -34,6 +34,25 @@ export type SearchProductRow = {
   market_count: number;
   last_updated: string;
   has_promotion: boolean;
+  offers: SearchProductOffer[];
+  is_canonical: boolean;
+};
+
+export type SearchProductOffer = {
+  store_id: string;
+  store_name: string;
+  store_slug: string | null;
+  store_logo_url: string | null;
+  store_product_id: string;
+  external_name: string;
+  product_url: string | null;
+  regular_price: number | null;
+  promotional_price: number | null;
+  effective_price: number | null;
+  promotion_text: string | null;
+  promotion_end_at: string | null;
+  collected_at: string;
+  is_lowest: boolean;
 };
 
 export function searchProductsQuery(filters: SearchFilters) {
@@ -54,7 +73,10 @@ export function searchProductsQuery(filters: SearchFilters) {
         offset_count: filters.offset ?? 0,
       });
       if (error) throw error;
-      return (data ?? []) as SearchProductRow[];
+      return ((data ?? []) as SearchProductRow[]).map((product) => ({
+        ...product,
+        offers: Array.isArray(product.offers) ? product.offers : [],
+      }));
     },
   });
 }
