@@ -42,3 +42,11 @@ venv/
 
 # Logs das coletas
 logs/
+
+# Estado/trava em runtime dos coletores
+.collector_state/
+.tauste_collection.lock/
+.confianca_collection.lock/
+
+# Backups locais de scripts
+*.bak_*
