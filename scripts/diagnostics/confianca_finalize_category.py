@@ -17,7 +17,20 @@ ENV_FILE = ROOT_DIR / ".env"
 LOG_DIR = ROOT_DIR / "logs"
 
 STORE_ID = "4f97f5d6-6a17-46ab-bf63-b3724abef9ff"
-CATEGORY_KEY = "alimentos_basicos"
+
+# Mesmas chaves de scripts/collectors/confianca_marilia.py::CATEGORIES.
+CATEGORY_CHOICES = (
+    "alimentos_basicos",
+    "matinais",
+    "padaria",
+    "hortifruti",
+    "acougue",
+    "emporium",
+    "bebidas",
+    "higiene_beleza",
+    "marcas_exclusivas",
+    "pet_shop",
+)
 
 
 def load_env() -> None:
@@ -44,16 +57,34 @@ def load_env() -> None:
             os.environ.setdefault(key, value)
 
 
-def latest_file(pattern: str) -> Path:
+def _file_category(path: Path) -> str | None:
+    try:
+        data = json.loads(
+            path.read_text(encoding="utf-8")
+        )
+    except (OSError, ValueError):
+        return None
+
+    if not isinstance(data, dict):
+        return None
+
+    category = data.get("category")
+
+    return category if isinstance(category, str) else None
+
+
+def latest_file(pattern: str, category: str) -> Path:
     files = [
         path
         for path in LOG_DIR.glob(pattern)
         if path.is_file()
+        and _file_category(path) == category
     ]
 
     if not files:
         raise SystemExit(
-            f"ERRO: nenhum arquivo encontrado: {pattern}"
+            f"ERRO: nenhum arquivo encontrado para {pattern!r} "
+            f"na categoria {category!r}."
         )
 
     return max(
@@ -100,9 +131,15 @@ def successful_finalization_exists(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Finalização segura da categoria "
-            "alimentos_basicos do Confiança."
+            "Finalização segura de uma categoria "
+            "do Confiança."
         )
+    )
+
+    parser.add_argument(
+        "--categoria",
+        choices=CATEGORY_CHOICES,
+        default="alimentos_basicos",
     )
 
     parser.add_argument(
@@ -142,11 +179,13 @@ def main() -> int:
         return 2
 
     preview_file = latest_file(
-        "confianca_preview_*.json"
+        "confianca_preview_*.json",
+        args.categoria,
     )
 
     ingest_file = latest_file(
-        "confianca_full_ingest_*.json"
+        "confianca_full_ingest_*.json",
+        args.categoria,
     )
 
     preview = load_json(preview_file)
@@ -165,7 +204,7 @@ def main() -> int:
             if (
                 isinstance(product, dict)
                 and product.get("source_category")
-                == CATEGORY_KEY
+                == args.categoria
                 and str(
                     product.get("external_id", "")
                 ).strip()
@@ -179,6 +218,15 @@ def main() -> int:
     ids_collected = preview.get("ids_collected")
     products_normalized = preview.get(
         "products_normalized"
+    )
+
+    # Só a categoria com "catálogo assembler" reporta expected_total;
+    # as demais paginam por HTML e usam ids_collected como referência
+    # (mesmo critério de scripts/diagnostics/confianca_full_ingest.py).
+    reference_total = (
+        expected_total
+        if isinstance(expected_total, int)
+        else ids_collected
     )
 
     ingest_preview_file = ingest.get(
@@ -203,28 +251,30 @@ def main() -> int:
         "batch_failures"
     )
 
-    if expected_total != 290:
+    if (
+        not isinstance(reference_total, int)
+        or reference_total <= 0
+    ):
         errors.append(
-            f"expected_total diferente de 290: "
-            f"{expected_total}"
+            f"total de referência inválido: {reference_total}"
         )
 
-    if ids_collected != expected_total:
+    if ids_collected != reference_total:
         errors.append(
-            "ids_collected diferente de expected_total"
+            "ids_collected diferente do total de referência"
         )
 
-    if products_normalized != expected_total:
+    if products_normalized != reference_total:
         errors.append(
-            "products_normalized diferente de expected_total"
+            "products_normalized diferente do total de referência"
         )
 
-    if products_expected != expected_total:
+    if products_expected != reference_total:
         errors.append(
             "products_expected da ingestão está incorreto"
         )
 
-    if products_sent != expected_total:
+    if products_sent != reference_total:
         errors.append(
             "products_sent da ingestão está incorreto"
         )
@@ -234,7 +284,7 @@ def main() -> int:
             f"ingestão possui falhas: {batch_failures}"
         )
 
-    if len(seen_external_ids) != expected_total:
+    if len(seen_external_ids) != reference_total:
         errors.append(
             "quantidade de IDs para finalização incorreta: "
             f"{len(seen_external_ids)}"
@@ -263,7 +313,7 @@ def main() -> int:
     print(f"Prévia: {preview_file}")
     print(f"Ingestão: {ingest_file}")
     print(f"Store ID: {configured_store_id}")
-    print(f"Categoria: {CATEGORY_KEY}")
+    print(f"Categoria: {args.categoria}")
     print(
         f"IDs que serão marcados como vistos: "
         f"{len(seen_external_ids)}"
@@ -325,12 +375,12 @@ def main() -> int:
         )
 
     sync_token = (
-        f"confianca-{CATEGORY_KEY}-{uuid4()}"
+        f"confianca-{args.categoria}-{uuid4()}"
     )
 
     payload = {
         "store_id": configured_store_id,
-        "category_key": CATEGORY_KEY,
+        "category_key": args.categoria,
         "seen_external_ids": seen_external_ids,
         "sync_token": sync_token,
         "collected_at": collected_at,
@@ -407,7 +457,7 @@ def main() -> int:
                 "preview_file": str(preview_file),
                 "ingest_file": str(ingest_file),
                 "store_id": configured_store_id,
-                "category_key": CATEGORY_KEY,
+                "category_key": args.categoria,
                 "seen_external_ids_count": (
                     len(seen_external_ids)
                 ),

@@ -1,6 +1,7 @@
 #!/bin/bash
 
-set -Eeuo pipefail
+set -u
+set -o pipefail
 
 PROJECT_DIR="$HOME/Projects/compra-certa-mar-lia"
 PYTHON="$PROJECT_DIR/.venv/bin/python"
@@ -8,36 +9,12 @@ PYTHON="$PROJECT_DIR/.venv/bin/python"
 LOG_DIR="$PROJECT_DIR/logs"
 LOCK_DIR="$PROJECT_DIR/.confianca_collection.lock"
 
-TIMESTAMP="$(date '+%Y%m%d_%H%M%S')"
-LOG_FILE="$LOG_DIR/confianca_${TIMESTAMP}.log"
-SUMMARY_FILE="$LOG_DIR/resumo_confianca_${TIMESTAMP}.log"
-
 mkdir -p "$LOG_DIR"
-cd "$PROJECT_DIR"
+cd "$PROJECT_DIR" || exit 1
 
 remove_lock() {
     rm -rf "$LOCK_DIR"
 }
-
-fail() {
-    local exit_code=$?
-    local line_number="${1:-desconhecida}"
-
-    {
-        echo
-        echo "============================================================"
-        echo "FALHA NA COLETA DO CONFIANÇA"
-        echo "Linha: $line_number"
-        echo "Código de saída: $exit_code"
-        echo "Fim: $(date '+%Y-%m-%d %H:%M:%S')"
-        echo "============================================================"
-    } | tee -a "$LOG_FILE" "$SUMMARY_FILE"
-
-    exit "$exit_code"
-}
-
-trap 'fail $LINENO' ERR
-trap remove_lock EXIT INT TERM
 
 if [[ -d "$LOCK_DIR" ]]; then
     OLD_PID=""
@@ -58,53 +35,121 @@ fi
 
 mkdir "$LOCK_DIR"
 echo "$$" > "$LOCK_DIR/pid"
+trap remove_lock EXIT INT TERM
 
 if [[ ! -x "$PYTHON" ]]; then
     echo "ERRO: Python do ambiente virtual não encontrado."
     exit 11
 fi
 
+# Mesmas chaves de scripts/collectors/confianca_marilia.py::CATEGORIES.
+CATEGORIES=(
+    alimentos_basicos
+    matinais
+    padaria
+    hortifruti
+    acougue
+    emporium
+    bebidas
+    higiene_beleza
+    marcas_exclusivas
+    pet_shop
+)
+
+CATEGORY_DELAY="${CATEGORY_DELAY:-5}"
+
+RUN_TIMESTAMP="$(date '+%Y%m%d_%H%M%S')"
+SUMMARY_FILE="$LOG_DIR/resumo_confianca_${RUN_TIMESTAMP}.log"
+
+SUCCESS_COUNT=0
+FAILURE_COUNT=0
+
 {
     echo "============================================================"
     echo "Coleta Confiança Marília"
     echo "Início: $(date '+%Y-%m-%d %H:%M:%S')"
-    echo "Categoria: alimentos_basicos"
+    echo "Categorias: ${CATEGORIES[*]}"
     echo "============================================================"
-} | tee "$LOG_FILE" "$SUMMARY_FILE"
+} | tee "$SUMMARY_FILE"
 
-echo | tee -a "$LOG_FILE"
-echo "ETAPA 1: coleta e geração da prévia" | tee -a "$LOG_FILE"
+for category in "${CATEGORIES[@]}"; do
+    LOG_FILE="$LOG_DIR/confianca_${category}_${RUN_TIMESTAMP}.log"
 
-"$PYTHON" \
-    scripts/collectors/confianca_marilia.py \
-    --categoria alimentos_basicos \
-    --dry-run \
-    2>&1 | tee -a "$LOG_FILE"
+    {
+        echo "============================================================"
+        echo "Categoria: $category"
+        echo "Início: $(date '+%Y-%m-%d %H:%M:%S')"
+        echo "============================================================"
+        echo
+        echo "ETAPA 1: coleta e geração da prévia"
+    } | tee "$LOG_FILE"
 
-echo | tee -a "$LOG_FILE"
-echo "ETAPA 2: ingestão completa" | tee -a "$LOG_FILE"
+    "$PYTHON" \
+        scripts/collectors/confianca_marilia.py \
+        --categoria "$category" \
+        --dry-run \
+        2>&1 | tee -a "$LOG_FILE"
 
-"$PYTHON" \
-    scripts/diagnostics/confianca_full_ingest.py \
-    --enviar \
-    2>&1 | tee -a "$LOG_FILE"
+    STATUS=${PIPESTATUS[0]}
 
-echo | tee -a "$LOG_FILE"
-echo "ETAPA 3: finalização da categoria" | tee -a "$LOG_FILE"
+    if [[ "$STATUS" -ne 0 ]]; then
+        echo "FALHA: $category (coleta), código $STATUS" | tee -a "$LOG_FILE" "$SUMMARY_FILE"
+        FAILURE_COUNT=$((FAILURE_COUNT + 1))
+        sleep "$CATEGORY_DELAY"
+        continue
+    fi
 
-"$PYTHON" \
-    scripts/diagnostics/confianca_finalize_category.py \
-    --enviar \
-    2>&1 | tee -a "$LOG_FILE"
+    echo | tee -a "$LOG_FILE"
+    echo "ETAPA 2: ingestão completa" | tee -a "$LOG_FILE"
+
+    "$PYTHON" \
+        scripts/diagnostics/confianca_full_ingest.py \
+        --categoria "$category" \
+        --enviar \
+        2>&1 | tee -a "$LOG_FILE"
+
+    STATUS=${PIPESTATUS[0]}
+
+    if [[ "$STATUS" -ne 0 ]]; then
+        echo "FALHA: $category (ingestão), código $STATUS" | tee -a "$LOG_FILE" "$SUMMARY_FILE"
+        FAILURE_COUNT=$((FAILURE_COUNT + 1))
+        sleep "$CATEGORY_DELAY"
+        continue
+    fi
+
+    echo | tee -a "$LOG_FILE"
+    echo "ETAPA 3: finalização da categoria" | tee -a "$LOG_FILE"
+
+    "$PYTHON" \
+        scripts/diagnostics/confianca_finalize_category.py \
+        --categoria "$category" \
+        --enviar \
+        2>&1 | tee -a "$LOG_FILE"
+
+    STATUS=${PIPESTATUS[0]}
+
+    if [[ "$STATUS" -ne 0 ]]; then
+        echo "FALHA: $category (finalização), código $STATUS" | tee -a "$LOG_FILE" "$SUMMARY_FILE"
+        FAILURE_COUNT=$((FAILURE_COUNT + 1))
+        sleep "$CATEGORY_DELAY"
+        continue
+    fi
+
+    echo "SUCESSO: $category" | tee -a "$LOG_FILE" "$SUMMARY_FILE"
+    SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+
+    sleep "$CATEGORY_DELAY"
+done
 
 {
     echo
     echo "============================================================"
-    echo "SUCESSO: alimentos_basicos"
+    echo "Resumo final"
     echo "Fim: $(date '+%Y-%m-%d %H:%M:%S')"
-    echo "Último código de saída: 0"
+    echo "Categorias concluídas: $SUCCESS_COUNT"
+    echo "Categorias com falha: $FAILURE_COUNT"
     echo "============================================================"
-} | tee -a "$LOG_FILE" "$SUMMARY_FILE"
+} | tee -a "$SUMMARY_FILE"
 
 find "$LOG_DIR" \
     -type f \
@@ -117,5 +162,9 @@ find "$LOG_DIR" \
     \) \
     -mtime +30 \
     -delete
+
+if [[ "$FAILURE_COUNT" -gt 0 ]]; then
+    exit 1
+fi
 
 exit 0

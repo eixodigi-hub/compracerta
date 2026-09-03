@@ -13,19 +13,68 @@ import requests
 ROOT_DIR = Path(__file__).resolve().parents[2]
 ENV_FILE = ROOT_DIR / ".env"
 LOG_DIR = ROOT_DIR / "logs"
+STATE_DIR = ROOT_DIR / ".collector_state"
+TOTALS_FILE = STATE_DIR / "confianca_category_totals.json"
 
 EXPECTED_STORE_ID = (
     "4f97f5d6-6a17-46ab-bf63-b3724abef9ff"
 )
 
 BATCH_SIZE = 50
-CATEGORY_KEY = "alimentos_basicos"
 
-# Piso de sanidade: o catálogo variou entre ~260 e ~300 itens nas últimas
-# coletas. Um total abaixo disso indica coleta quebrada (bloqueio, parse
-# errado etc.) e deve continuar travando o envio. Crescimento normal do
-# catálogo acima do piso não deve mais travar a coleta diária.
-MIN_EXPECTED_TOTAL = 200
+# Mesmas chaves de scripts/collectors/confianca_marilia.py::CATEGORIES.
+CATEGORY_CHOICES = (
+    "alimentos_basicos",
+    "matinais",
+    "padaria",
+    "hortifruti",
+    "acougue",
+    "emporium",
+    "bebidas",
+    "higiene_beleza",
+    "marcas_exclusivas",
+    "pet_shop",
+)
+
+
+def load_known_totals() -> dict[str, int]:
+    if not TOTALS_FILE.exists():
+        return {}
+
+    try:
+        data = json.loads(
+            TOTALS_FILE.read_text(encoding="utf-8")
+        )
+    except (OSError, ValueError):
+        return {}
+
+    if not isinstance(data, dict):
+        return {}
+
+    return {
+        key: value
+        for key, value in data.items()
+        if isinstance(value, int)
+    }
+
+
+def save_known_total(
+    category: str,
+    total: int,
+) -> None:
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+
+    totals = load_known_totals()
+    totals[category] = total
+
+    TOTALS_FILE.write_text(
+        json.dumps(
+            totals,
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
 
 
 def load_env() -> None:
@@ -52,14 +101,35 @@ def load_env() -> None:
             os.environ.setdefault(key, value)
 
 
-def latest_preview() -> Path:
-    files = list(
-        LOG_DIR.glob("confianca_preview_*.json")
-    )
+def _preview_category(path: Path) -> Optional[str]:
+    try:
+        data = json.loads(
+            path.read_text(encoding="utf-8")
+        )
+    except (OSError, ValueError):
+        return None
+
+    if not isinstance(data, dict):
+        return None
+
+    category = data.get("category")
+
+    return category if isinstance(category, str) else None
+
+
+def latest_preview(category: str) -> Path:
+    files = [
+        path
+        for path in LOG_DIR.glob(
+            "confianca_preview_*.json"
+        )
+        if _preview_category(path) == category
+    ]
 
     if not files:
         raise SystemExit(
-            "ERRO: nenhum arquivo de prévia encontrado."
+            "ERRO: nenhum arquivo de prévia encontrado "
+            f"para a categoria {category!r}."
         )
 
     return max(
@@ -81,6 +151,7 @@ def as_float(value: Any) -> Optional[float]:
 def convert_product(
     product: dict[str, Any],
     collected_at: str,
+    category: str,
 ) -> dict[str, Any]:
     regular_price = as_float(
         product.get("regular_price")
@@ -139,14 +210,22 @@ def convert_product(
             product.get("available")
         ),
         "collected_at": collected_at,
-        "source_category": CATEGORY_KEY,
+        "source_category": category,
     }
 
 
 def validate_preview(
     data: dict[str, Any],
+    category: str,
 ) -> list[str]:
     errors: list[str] = []
+
+    if data.get("category") != category:
+        errors.append(
+            "prévia pertence a outra categoria: "
+            f"{data.get('category')!r} "
+            f"(esperado {category!r})"
+        )
 
     expected_total = data.get("expected_total")
     ids_collected = data.get("ids_collected")
@@ -158,33 +237,61 @@ def validate_preview(
     products = data.get("products", [])
     skipped = data.get("skipped", {})
 
+    # Só a categoria com "catálogo assembler" (navigation_id
+    # configurado em confianca_marilia.py) reporta expected_total.
+    # As demais paginam por HTML e não têm um total independente do
+    # site, então o próprio ids_collected vira a referência.
+    reference_total = (
+        expected_total
+        if isinstance(expected_total, int)
+        else ids_collected
+    )
+
     if (
-        not isinstance(expected_total, int)
-        or expected_total < MIN_EXPECTED_TOTAL
+        not isinstance(reference_total, int)
+        or reference_total <= 0
     ):
         errors.append(
-            f"expected_total abaixo do piso de sanidade "
-            f"({MIN_EXPECTED_TOTAL}): {expected_total}"
+            f"total de referência inválido: {reference_total}"
+        )
+    else:
+        baseline = load_known_totals().get(category)
+
+        if baseline is not None:
+            tolerance = max(
+                30,
+                round(baseline * 0.2),
+            )
+
+            if (
+                abs(reference_total - baseline)
+                > tolerance
+            ):
+                errors.append(
+                    "total fora da variação "
+                    f"esperada (baseline={baseline}, "
+                    f"tolerância=±{tolerance}): "
+                    f"{reference_total}"
+                )
+
+    if ids_collected != reference_total:
+        errors.append(
+            "ids_collected diferente do total de referência"
         )
 
-    if ids_collected != expected_total:
+    if products_received != reference_total:
         errors.append(
-            "ids_collected diferente de expected_total"
+            "products_received diferente do total de referência"
         )
 
-    if products_received != expected_total:
+    if products_normalized != reference_total:
         errors.append(
-            "products_received diferente de expected_total"
-        )
-
-    if products_normalized != expected_total:
-        errors.append(
-            "products_normalized diferente de expected_total"
+            "products_normalized diferente do total de referência"
         )
 
     if not isinstance(products, list):
         errors.append("campo products inválido")
-    elif len(products) != expected_total:
+    elif len(products) != reference_total:
         errors.append(
             f"quantidade no array products: {len(products)}"
         )
@@ -250,7 +357,7 @@ def validate_preview(
 
             if (
                 product.get("source_category")
-                != CATEGORY_KEY
+                != category
             ):
                 errors.append(
                     f"produto {external_id} "
@@ -269,6 +376,12 @@ def parse_args() -> argparse.Namespace:
             "Ingestão completa do Confiança "
             "sem finalizar categoria."
         )
+    )
+
+    parser.add_argument(
+        "--categoria",
+        choices=CATEGORY_CHOICES,
+        default="alimentos_basicos",
     )
 
     parser.add_argument(
@@ -306,7 +419,7 @@ def main() -> int:
         print(f"Encontrado: {store_id}")
         return 2
 
-    preview_file = latest_preview()
+    preview_file = latest_preview(args.categoria)
 
     data = json.loads(
         preview_file.read_text(
@@ -314,11 +427,12 @@ def main() -> int:
         )
     )
 
-    errors = validate_preview(data)
+    errors = validate_preview(data, args.categoria)
 
     print("=" * 60)
     print("INGESTÃO COMPLETA DO CONFIANÇA")
     print("=" * 60)
+    print(f"Categoria: {args.categoria}")
     print(f"Arquivo: {preview_file}")
     print(f"Store ID: {store_id}")
     print(
@@ -350,6 +464,7 @@ def main() -> int:
         convert_product(
             product,
             collected_at,
+            args.categoria,
         )
         for product in original_products
     ]
@@ -481,6 +596,7 @@ def main() -> int:
             {
                 "sent_at": collected_at,
                 "store_id": store_id,
+                "category": args.categoria,
                 "preview_file": str(preview_file),
                 "products_expected": len(products),
                 "products_sent": sent,
@@ -493,6 +609,18 @@ def main() -> int:
         ),
         encoding="utf-8",
     )
+
+    if failures == 0 and sent == len(products):
+        reference_total = data.get("expected_total")
+
+        if not isinstance(reference_total, int):
+            reference_total = data.get("ids_collected")
+
+        if isinstance(reference_total, int):
+            save_known_total(
+                args.categoria,
+                reference_total,
+            )
 
     print()
     print("=" * 60)
