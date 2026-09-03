@@ -11,7 +11,7 @@ import { Loader2 } from "lucide-react";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Redefinir senha — Compra Certa Marília" },
+      { title: "Redefinir senha — Compra Certa" },
       { name: "description", content: "Escolha uma nova senha para sua conta." },
       { name: "robots", content: "noindex" },
     ],

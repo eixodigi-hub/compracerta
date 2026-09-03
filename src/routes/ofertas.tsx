@@ -25,9 +25,9 @@ export const Route = createFileRoute("/ofertas")({
   validateSearch: zodValidator(searchSchema),
   head: () => ({
     meta: [
-      { title: "Ofertas de hoje — Compra Certa Marília" },
+      { title: "Ofertas de hoje — Compra Certa" },
       { name: "description", content: "As melhores promoções válidas nos supermercados de Marília, atualizadas diariamente." },
-      { property: "og:title", content: "Ofertas de hoje — Compra Certa Marília" },
+      { property: "og:title", content: "Ofertas de hoje — Compra Certa" },
       { property: "og:description", content: "Promoções válidas nos supermercados de Marília, ordenadas pelo maior desconto." },
     ],
   }),

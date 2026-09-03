@@ -1,6 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
 import { queryOptions } from "@tanstack/react-query";
 
+export const citiesQuery = queryOptions({
+  queryKey: ["cities", "active"],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("cities")
+      .select("id, slug, name, state")
+      .eq("active", true)
+      .order("name", { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  },
+});
+
 export const categoriesQuery = queryOptions({
   queryKey: ["categories"],
   queryFn: async () => {

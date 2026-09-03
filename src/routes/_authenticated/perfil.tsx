@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 export const Route = createFileRoute("/_authenticated/perfil")({
   head: () => ({
     meta: [
-      { title: "Meu perfil — Compra Certa Marília" },
+      { title: "Meu perfil — Compra Certa" },
       { name: "description", content: "Gerencie suas informações, listas salvas e preferências." },
       { name: "robots", content: "noindex" },
     ],

@@ -47,9 +47,9 @@ export const Route = createFileRoute("/pesquisar")({
   validateSearch: zodValidator(searchSchema),
   head: () => ({
     meta: [
-      { title: "Pesquisar produtos — Compra Certa Marília" },
+      { title: "Pesquisar produtos — Compra Certa" },
       { name: "description", content: "Pesquise produtos e compare preços entre supermercados de Marília." },
-      { property: "og:title", content: "Pesquisar produtos — Compra Certa Marília" },
+      { property: "og:title", content: "Pesquisar produtos — Compra Certa" },
       { property: "og:description", content: "Pesquise produtos e compare preços entre supermercados de Marília." },
     ],
   }),

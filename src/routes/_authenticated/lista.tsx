@@ -30,7 +30,7 @@ import {
 export const Route = createFileRoute("/_authenticated/lista")({
   head: () => ({
     meta: [
-      { title: "Minhas listas — Compra Certa Marília" },
+      { title: "Minhas listas — Compra Certa" },
       { name: "description", content: "Monte sua lista de compras e descubra em qual mercado sai mais barato." },
       { name: "robots", content: "noindex" },
     ],

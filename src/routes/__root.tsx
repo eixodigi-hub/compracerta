@@ -80,9 +80,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Compra Certa Marília — Compare preços dos supermercados" },
+      { title: "Compra Certa — Compare preços dos supermercados" },
       { name: "description", content: "Compare preços entre supermercados de Marília e descubra onde sua compra fica mais barata." },
-      { property: "og:title", content: "Compra Certa Marília" },
+      { property: "og:title", content: "Compra Certa" },
       { property: "og:description", content: "Compare preços entre supermercados de Marília e descubra onde sua compra fica mais barata." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

@@ -48,7 +48,7 @@ export const Route = createFileRoute("/produto/$id")({
   },
   head: () => ({
     meta: [
-      { title: "Detalhes do produto — Compra Certa Marília" },
+      { title: "Detalhes do produto — Compra Certa" },
       { name: "description", content: "Compare o preço deste produto entre os supermercados de Marília." },
     ],
   }),

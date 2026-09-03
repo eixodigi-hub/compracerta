@@ -18,9 +18,9 @@ export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Entrar ou cadastrar — Compra Certa Marília" },
+      { title: "Entrar ou cadastrar — Compra Certa" },
       { name: "description", content: "Acesse sua conta ou crie uma para salvar suas listas de compras." },
-      { property: "og:title", content: "Entrar ou cadastrar — Compra Certa Marília" },
+      { property: "og:title", content: "Entrar ou cadastrar — Compra Certa" },
       { property: "og:description", content: "Acesse sua conta ou crie uma para salvar suas listas de compras." },
       { name: "robots", content: "noindex" },
     ],

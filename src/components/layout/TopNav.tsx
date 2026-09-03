@@ -1,6 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { ShoppingBasket, LogIn } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ShoppingBasket, LogIn, MapPin } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useSelectedCity } from "@/hooks/use-selected-city";
+import { citiesQuery } from "@/lib/queries";
 
 const items: Array<{ to: "/" | "/pesquisar" | "/lista" | "/ofertas" | "/perfil"; label: string; exact?: boolean }> = [
   { to: "/", label: "Início", exact: true },
@@ -12,16 +15,32 @@ const items: Array<{ to: "/" | "/pesquisar" | "/lista" | "/ofertas" | "/perfil";
 
 export function TopNav() {
   const { isAuthenticated } = useAuth();
+  const { citySlug, clearCity } = useSelectedCity();
+  const { data: cities } = useQuery(citiesQuery);
+  const currentCity = cities?.find((city) => city.slug === citySlug);
 
   return (
     <header className="sticky top-0 z-40 hidden border-b border-border bg-background/95 backdrop-blur md:block">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <Link to="/" className="flex items-center gap-2 font-bold text-foreground">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-            <ShoppingBasket className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <span>Compra Certa Marília</span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-2 font-bold text-foreground">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground">
+              <ShoppingBasket className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span>Compra Certa</span>
+          </Link>
+          {currentCity && (
+            <button
+              type="button"
+              onClick={clearCity}
+              title="Trocar cidade"
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
+              {currentCity.name}
+            </button>
+          )}
+        </div>
         <nav aria-label="Navegação principal">
           <ul className="flex items-center gap-1">
             {items.map(({ to, label, exact }) => (
