@@ -42,8 +42,8 @@ mkdir "$LOCK_DIR"
 echo "$$" > "$LOCK_DIR/pid"
 trap remove_lock EXIT INT TERM
 
-if [[ ! -x "$PYTHON" ]]; then
-    echo "ERRO: Python do ambiente virtual não encontrado."
+if ! command -v "$PYTHON" >/dev/null 2>&1; then
+    echo "ERRO: nenhum interpretador Python encontrado ($PYTHON)."
     exit 11
 fi
 
