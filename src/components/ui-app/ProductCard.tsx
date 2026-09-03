@@ -2,8 +2,9 @@ import { Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ImageOff, Store, Clock, GitCompareArrows, Plus, Trophy } from "lucide-react";
-import type { SearchProductRow } from "@/lib/search-queries";
+import { ImageOff, Store, Clock, GitCompareArrows, Plus, Trophy, Equal } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { SearchProductRow, SearchProductOffer } from "@/lib/search-queries";
 
 function currency(v: number | null | undefined) {
   if (v == null) return "—";
@@ -19,6 +20,22 @@ function formatQty(quantity: number | null, unit: string | null) {
 function formatUpdated(iso: string) {
   const d = new Date(iso);
   return `${d.toLocaleDateString("pt-BR")} ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+}
+
+/**
+ * Menor preço "puro" vira badge/verde só quando é único; se dois ou mais
+ * mercados empatam no menor preço, nenhum é "melhor" que o outro — mostra
+ * "mesmo preço" em vez de repetir "menor preço" em todo mundo.
+ */
+function withPriceRank(offers: SearchProductOffer[]) {
+  const prices = offers.map((o) => o.effective_price).filter((v): v is number => v != null);
+  const minPrice = prices.length ? Math.min(...prices) : null;
+  const winners = minPrice == null ? 0 : prices.filter((v) => v === minPrice).length;
+
+  return offers.map((offer) => {
+    const isCheapest = minPrice != null && offer.effective_price === minPrice;
+    return { offer, isCheapest, isTie: isCheapest && winners > 1 };
+  });
 }
 
 export function ProductCard({
@@ -63,9 +80,7 @@ export function ProductCard({
               </h3>
             )}
             {product.has_promotion && discount > 0 && (
-              <Badge className="bg-promo text-promo-foreground hover:bg-promo">
-                -{discount}%
-              </Badge>
+              <Badge className="bg-promo text-promo-foreground hover:bg-promo">-{discount}%</Badge>
             )}
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
@@ -103,30 +118,53 @@ export function ProductCard({
       </div>
 
       <div className="space-y-2 rounded-lg border border-border bg-secondary/30 p-2.5">
-        {product.offers.map((offer) => (
+        {withPriceRank(product.offers).map(({ offer, isCheapest, isTie }) => (
           <div
             key={offer.store_product_id}
-            className="flex items-start justify-between gap-3 rounded-md bg-card px-2.5 py-2"
+            className={cn(
+              "flex items-start justify-between gap-3 rounded-md px-2.5 py-2 ring-1 ring-inset",
+              isCheapest && !isTie
+                ? "bg-green-50 ring-green-600/40 dark:bg-green-950/30"
+                : isTie
+                  ? "bg-blue-50 ring-blue-600/30 dark:bg-blue-950/30"
+                  : "bg-card ring-transparent",
+            )}
           >
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5">
                 <p className="truncate text-xs font-semibold">{offer.store_name}</p>
-                {offer.is_lowest && (
-                  <Badge variant="secondary" className="gap-1 border-primary/20 bg-primary-soft text-primary">
+                {isCheapest && !isTie && (
+                  <Badge className="gap-1 border-transparent bg-green-600 text-white hover:bg-green-600">
                     <Trophy className="h-3 w-3" aria-hidden="true" />
                     menor preço
+                  </Badge>
+                )}
+                {isTie && (
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 border-blue-600/20 bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-300"
+                  >
+                    <Equal className="h-3 w-3" aria-hidden="true" />
+                    mesmo preço
                   </Badge>
                 )}
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 Normal: {currency(offer.regular_price)}
-                {offer.promotional_price != null ? ` · Promo: ${currency(offer.promotional_price)}` : ""}
+                {offer.promotional_price != null
+                  ? ` · Promo: ${currency(offer.promotional_price)}`
+                  : ""}
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 Coleta: {formatUpdated(offer.collected_at)}
               </p>
             </div>
-            <p className="shrink-0 text-right text-sm font-bold text-primary">
+            <p
+              className={cn(
+                "shrink-0 text-right text-sm font-bold",
+                isCheapest ? "text-green-700 dark:text-green-400" : "text-primary",
+              )}
+            >
               {currency(offer.effective_price)}
             </p>
           </div>

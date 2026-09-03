@@ -49,7 +49,10 @@ export const Route = createFileRoute("/produto/$id")({
   head: () => ({
     meta: [
       { title: "Detalhes do produto — Compra Certa" },
-      { name: "description", content: "Compare o preço deste produto entre os supermercados de Marília." },
+      {
+        name: "description",
+        content: "Compare o preço deste produto entre os supermercados de Marília.",
+      },
     ],
   }),
   errorComponent: ({ error }) => (
@@ -93,6 +96,12 @@ function ProdutoPage() {
     return av - bv;
   });
 
+  // Menor preço só vira destaque de "vencedor" quando é único; se dois ou
+  // mais mercados empatam no menor preço, nenhum é "melhor" que o outro.
+  const prices = offers.map((o) => o.effective_price).filter((v): v is number => v != null);
+  const minPrice = prices.length ? Math.min(...prices) : null;
+  const winners = minPrice == null ? 0 : prices.filter((v) => v === minPrice).length;
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 md:py-10 space-y-8">
       {/* Header */}
@@ -104,7 +113,9 @@ function ProdutoPage() {
         </div>
         <div>
           {p.category_name ? (
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">{p.category_name}</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              {p.category_name}
+            </p>
           ) : null}
           <h1 className="mt-1 text-2xl font-bold md:text-3xl">{p.name}</h1>
           <div className="mt-2 flex flex-wrap gap-2 text-sm text-muted-foreground">
@@ -131,7 +142,11 @@ function ProdutoPage() {
           <StatCard label="Preço médio" value={brl(stats.avg)} />
           <StatCard
             label="Variação atual vs. média"
-            value={stats.variation_pct == null ? "—" : `${stats.variation_pct > 0 ? "+" : ""}${stats.variation_pct}%`}
+            value={
+              stats.variation_pct == null
+                ? "—"
+                : `${stats.variation_pct > 0 ? "+" : ""}${stats.variation_pct}%`
+            }
             icon={
               stats.variation_pct == null ? null : stats.variation_pct < 0 ? (
                 <TrendingDown className="h-4 w-4 text-green-600" />
@@ -157,7 +172,11 @@ function ProdutoPage() {
                 <LineChart data={history} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="day" tickFormatter={dayFmt} fontSize={12} />
-                  <YAxis tickFormatter={(v) => `R$ ${Number(v).toFixed(2)}`} fontSize={12} width={70} />
+                  <YAxis
+                    tickFormatter={(v) => `R$ ${Number(v).toFixed(2)}`}
+                    fontSize={12}
+                    width={70}
+                  />
                   <Tooltip
                     formatter={(v: number) => brl(v)}
                     labelFormatter={(l: string) => dayFmt(l)}
@@ -209,48 +228,79 @@ function ProdutoPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                offers.map((o, idx) => (
-                  <TableRow key={o.store_id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{o.store_name}</span>
-                        {idx === 0 && o.effective_price != null ? (
-                          <Badge className="bg-green-600 hover:bg-green-600">Melhor preço</Badge>
+                offers.map((o) => {
+                  const isCheapest = minPrice != null && o.effective_price === minPrice;
+                  const isTie = isCheapest && winners > 1;
+
+                  return (
+                    <TableRow
+                      key={o.store_id}
+                      className={
+                        isCheapest && !isTie
+                          ? "bg-green-50 dark:bg-green-950/20"
+                          : isTie
+                            ? "bg-blue-50 dark:bg-blue-950/20"
+                            : undefined
+                      }
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{o.store_name}</span>
+                          {isCheapest && !isTie ? (
+                            <Badge className="bg-green-600 hover:bg-green-600">Melhor preço</Badge>
+                          ) : null}
+                          {isTie ? (
+                            <Badge className="bg-blue-600 hover:bg-blue-600">Mesmo preço</Badge>
+                          ) : null}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {brl(o.regular_price)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {o.promotional_price != null ? (
+                          <span className="font-medium text-orange-600">
+                            {brl(o.promotional_price)}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell
+                        className={
+                          isCheapest
+                            ? "text-right tabular-nums font-semibold text-green-700 dark:text-green-400"
+                            : "text-right tabular-nums font-semibold"
+                        }
+                      >
+                        {brl(o.effective_price)}
+                      </TableCell>
+                      <TableCell>
+                        {o.in_stock === false ? (
+                          <Badge variant="outline" className="text-muted-foreground">
+                            Sem estoque
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Disponível</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {o.product_url || o.website_url ? (
+                          <Button asChild size="sm" variant="outline">
+                            <a
+                              href={o.product_url ?? o.website_url ?? "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Ir para o mercado
+                              <ExternalLink className="ml-1 h-3 w-3" />
+                            </a>
+                          </Button>
                         ) : null}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">{brl(o.regular_price)}</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {o.promotional_price != null ? (
-                        <span className="font-medium text-orange-600">{brl(o.promotional_price)}</span>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums font-semibold">
-                      {brl(o.effective_price)}
-                    </TableCell>
-                    <TableCell>
-                      {o.in_stock === false ? (
-                        <Badge variant="outline" className="text-muted-foreground">
-                          Sem estoque
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">Disponível</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {o.product_url || o.website_url ? (
-                        <Button asChild size="sm" variant="outline">
-                          <a href={o.product_url ?? o.website_url ?? "#"} target="_blank" rel="noopener noreferrer">
-                            Ir para o mercado
-                            <ExternalLink className="ml-1 h-3 w-3" />
-                          </a>
-                        </Button>
-                      ) : null}
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -259,7 +309,8 @@ function ProdutoPage() {
         <Alert className="mt-4">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Preços e disponibilidade podem mudar a qualquer momento no site do supermercado. Confirme sempre antes de finalizar a compra.
+            Preços e disponibilidade podem mudar a qualquer momento no site do supermercado.
+            Confirme sempre antes de finalizar a compra.
           </AlertDescription>
         </Alert>
       </section>
@@ -273,7 +324,15 @@ function ProdutoPage() {
   );
 }
 
-function StatCard({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
+function StatCard({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon?: React.ReactNode;
+}) {
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between">
