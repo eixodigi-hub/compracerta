@@ -54,3 +54,5 @@ logs/
 
 # Estado local da CLI do Supabase (link, versões, etc.)
 supabase/.temp/
+.vercel
+.env*

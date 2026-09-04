@@ -1,0 +1,33 @@
+name: Enviar alertas de promoção
+
+on:
+  schedule:
+    # 15:00 America/Sao_Paulo (UTC-3) — depois que todos os coletores
+    # do dia já rodaram, para os preços estarem atualizados.
+    - cron: "0 18 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: send-promo-alerts
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Disparar envio de alertas
+        env:
+          PROMO_ALERTS_URL: ${{ secrets.PROMO_ALERTS_URL }}
+          PROMO_ALERTS_SECRET: ${{ secrets.PROMO_ALERTS_SECRET }}
+        run: |
+          set -euo pipefail
+          http_code=$(curl -s -o /tmp/response.json -w "%{http_code}" -X POST "$PROMO_ALERTS_URL" \
+            -H "x-promo-alerts-secret: $PROMO_ALERTS_SECRET" \
+            -H "Content-Type: application/json")
+          echo "HTTP $http_code"
+          cat /tmp/response.json
+          echo
+          if [ "$http_code" -ge 300 ]; then
+            exit 1
+          fi

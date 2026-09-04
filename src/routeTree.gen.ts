@@ -29,6 +29,7 @@ import { Route as AuthenticatedAdminProdutosColetadosRouteImport } from './route
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
 import { Route as ApiPublicFinalizeCategorySyncRouteImport } from './routes/api/public/finalize-category-sync'
 import { Route as ApiPublicIngestProductsRouteImport } from './routes/api/public/ingest-products'
+import { Route as ApiPublicSendPromoAlertsRouteImport } from './routes/api/public/send-promo-alerts'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -137,6 +138,12 @@ const ApiPublicIngestProductsRoute = ApiPublicIngestProductsRouteImport.update({
   path: '/api/public/ingest-products',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSendPromoAlertsRoute =
+  ApiPublicSendPromoAlertsRouteImport.update({
+    id: '/api/public/send-promo-alerts',
+    path: '/api/public/send-promo-alerts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/api/public/finalize-category-sync': typeof ApiPublicFinalizeCategorySyncRoute
   '/api/public/ingest-products': typeof ApiPublicIngestProductsRoute
+  '/api/public/send-promo-alerts': typeof ApiPublicSendPromoAlertsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -177,6 +185,7 @@ export interface FileRoutesByTo {
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/api/public/finalize-category-sync': typeof ApiPublicFinalizeCategorySyncRoute
   '/api/public/ingest-products': typeof ApiPublicIngestProductsRoute
+  '/api/public/send-promo-alerts': typeof ApiPublicSendPromoAlertsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -200,6 +209,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/api/public/finalize-category-sync': typeof ApiPublicFinalizeCategorySyncRoute
   '/api/public/ingest-products': typeof ApiPublicIngestProductsRoute
+  '/api/public/send-promo-alerts': typeof ApiPublicSendPromoAlertsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
     | '/api/public/finalize-category-sync'
     | '/api/public/ingest-products'
+    | '/api/public/send-promo-alerts'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -243,6 +254,7 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
     | '/api/public/finalize-category-sync'
     | '/api/public/ingest-products'
+    | '/api/public/send-promo-alerts'
     | '/admin'
   id:
     | '__root__'
@@ -265,6 +277,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/usuarios'
     | '/api/public/finalize-category-sync'
     | '/api/public/ingest-products'
+    | '/api/public/send-promo-alerts'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -278,6 +291,7 @@ export interface RootRouteChildren {
   ProdutoIdRoute: typeof ProdutoIdRoute
   ApiPublicFinalizeCategorySyncRoute: typeof ApiPublicFinalizeCategorySyncRoute
   ApiPublicIngestProductsRoute: typeof ApiPublicIngestProductsRoute
+  ApiPublicSendPromoAlertsRoute: typeof ApiPublicSendPromoAlertsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -422,6 +436,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicIngestProductsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/send-promo-alerts': {
+      id: '/api/public/send-promo-alerts'
+      path: '/api/public/send-promo-alerts'
+      fullPath: '/api/public/send-promo-alerts'
+      preLoaderRoute: typeof ApiPublicSendPromoAlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -480,6 +501,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProdutoIdRoute: ProdutoIdRoute,
   ApiPublicFinalizeCategorySyncRoute: ApiPublicFinalizeCategorySyncRoute,
   ApiPublicIngestProductsRoute: ApiPublicIngestProductsRoute,
+  ApiPublicSendPromoAlertsRoute: ApiPublicSendPromoAlertsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

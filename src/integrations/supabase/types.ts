@@ -704,6 +704,31 @@ export type Database = {
           unit: string | null
         }[]
       }
+      get_promo_alerts_to_notify: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          alert_id: string
+          brand: string | null
+          canonical_product_id: string
+          image_url: string | null
+          price: number | null
+          product_name: string
+          quantity: number | null
+          regular_price: number | null
+          store_name: string | null
+          unit: string | null
+          user_email: string
+          user_id: string
+        }[]
+      }
+      mark_promo_alerts_notified: {
+        Args: { p_alert_ids: string[] }
+        Returns: undefined
+      }
+      reset_expired_promo_alerts: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_price_history: {
         Args: { p_days?: number; p_product_id: string }
         Returns: {
