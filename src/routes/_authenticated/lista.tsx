@@ -1,18 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { Plus, Trash2, Pencil, Check, X, Search, ShoppingBasket, AlertCircle, Store as StoreIcon, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Plus, Trash2, Pencil, Check, X, Search, ShoppingBasket, AlertCircle, Store as StoreIcon, Sparkles, TrendingDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import type { ComparisonPayload, StoreSummary } from "@/lib/shopping-list-queries";
 import {
   listsOptions,
   listItemsOptions,
@@ -424,21 +427,146 @@ function ItemsPanel({
 
 /* --------------------------- Comparison --------------------------- */
 
+type FilteredPerItemLine = {
+  product_id: string;
+  product_name: string;
+  quantity: number;
+  store_id: string;
+  store_name: string;
+  unit_price: number;
+  line_total: number;
+};
+
 function ComparisonPanel({
   loading,
   data,
 }: {
   loading: boolean;
-  data: import("@/lib/shopping-list-queries").ComparisonPayload | null;
+  data: ComparisonPayload | null;
 }) {
+  const allStoreIds = useMemo(() => (data?.stores ?? []).map((s) => s.store_id), [data]);
+  const [selected, setSelected] = useState<Set<string> | null>(null);
+
+  // Volta a incluir todo mercado novo (recém-selecionado ou primeira
+  // carga) automaticamente na seleção.
+  useEffect(() => {
+    if (!data) return;
+    setSelected((prev) => {
+      if (!prev) return new Set(allStoreIds);
+      const next = new Set(prev);
+      let changed = false;
+      for (const id of allStoreIds) {
+        if (!next.has(id)) {
+          next.add(id);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allStoreIds.join(",")]);
+
   if (loading) return <p className="text-sm text-muted-foreground">Calculando…</p>;
   if (!data || data.items.length === 0) return null;
 
-  const perItem = data.per_item;
-  const bestComplete = data.best_complete;
+  const effectiveSelected = selected ?? new Set(allStoreIds);
+  const filteredStores = data.stores.filter((s) => effectiveSelected.has(s.store_id));
+
+  // Cenário 1 recalculado a partir só dos mercados selecionados.
+  const completeCandidates = filteredStores.filter((s) => !s.has_missing && s.total_all != null);
+  const rankedComplete = [...completeCandidates].sort((a, b) => (a.total_all as number) - (b.total_all as number));
+  const bestComplete = rankedComplete[0] ?? null;
+  const worstComplete = rankedComplete[rankedComplete.length - 1] ?? null;
+  const maxGap =
+    rankedComplete.length >= 2 && bestComplete && worstComplete
+      ? (worstComplete.total_all as number) - (bestComplete.total_all as number)
+      : null;
+
+  // Cenário 2 recalculado a partir só dos mercados selecionados.
+  const perItemBreakdown: FilteredPerItemLine[] = [];
+  const perItemMissing: string[] = [];
+  for (const item of data.items) {
+    let best: FilteredPerItemLine | null = null;
+    for (const s of filteredStores) {
+      const line = s.lines.find((l) => l.product_id === item.product_id);
+      if (!line || line.missing || line.unit_price == null || line.line_total == null) continue;
+      if (!best || line.unit_price < best.unit_price) {
+        best = {
+          product_id: item.product_id,
+          product_name: item.product_name,
+          quantity: item.quantity,
+          store_id: s.store_id,
+          store_name: s.store_name,
+          unit_price: line.unit_price,
+          line_total: line.line_total,
+        };
+      }
+    }
+    if (best) perItemBreakdown.push(best);
+    else perItemMissing.push(item.product_name);
+  }
+  const perItemTotal = perItemBreakdown.length > 0
+    ? perItemBreakdown.reduce((acc, l) => acc + l.line_total, 0)
+    : null;
+  const storesNeeded = new Set(perItemBreakdown.map((l) => l.store_id)).size;
+  const savings =
+    bestComplete && perItemTotal != null ? (bestComplete.total_all as number) - perItemTotal : null;
 
   return (
     <div className="space-y-6">
+      <StoreFilterBar stores={data.stores} selected={effectiveSelected} onChange={setSelected} />
+
+      {/* Onde ela economiza mais */}
+      {rankedComplete.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold">Onde você economiza mais</h2>
+          <p className="text-sm text-muted-foreground">
+            Ranking dos mercados que têm sua lista completa, do mais barato ao mais caro.
+          </p>
+          {maxGap != null && maxGap > 0 && bestComplete && worstComplete && (
+            <Alert className="mt-3 border-green-600/50 bg-green-50 dark:bg-green-950/20">
+              <TrendingDown className="h-4 w-4" />
+              <AlertDescription>
+                Comprando tudo na <strong>{bestComplete.store_name}</strong> em vez da{" "}
+                <strong>{worstComplete.store_name}</strong>, você economiza{" "}
+                <strong>{brl(maxGap)}</strong> nesta lista.
+              </AlertDescription>
+            </Alert>
+          )}
+          <div className="mt-3 grid gap-2">
+            {rankedComplete.map((s, idx) => (
+              <div
+                key={s.store_id}
+                className={cn(
+                  "flex items-center justify-between gap-3 rounded-lg border px-4 py-2.5",
+                  idx === 0
+                    ? "border-green-600/40 bg-green-50 dark:bg-green-950/20"
+                    : "border-border bg-card",
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-5 shrink-0 text-center text-xs font-semibold text-muted-foreground">
+                    {idx + 1}º
+                  </span>
+                  <span className="font-medium">{s.store_name}</span>
+                  {idx === 0 && (
+                    <Badge className="bg-green-600 hover:bg-green-600">Mais barato</Badge>
+                  )}
+                </div>
+                <span
+                  className={cn(
+                    "font-semibold tabular-nums",
+                    idx === 0 ? "text-green-700 dark:text-green-400" : "",
+                  )}
+                >
+                  {brl(s.total_all)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Cenário 1: compra completa */}
       <section>
         <h2 className="text-lg font-semibold">Cenário 1 — Compra completa em um único mercado</h2>
@@ -457,13 +585,13 @@ function ComparisonPanel({
           <Alert className="mt-3">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Nenhum mercado possui todos os itens da sua lista neste momento.
+              Nenhum mercado selecionado possui todos os itens da sua lista neste momento.
             </AlertDescription>
           </Alert>
         )}
 
         <div className="mt-4 grid gap-3">
-          {data.stores.map((s) => (
+          {filteredStores.map((s) => (
             <Card key={s.store_id} className="p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2 font-medium">
@@ -499,28 +627,28 @@ function ComparisonPanel({
       <section>
         <h2 className="text-lg font-semibold">Cenário 2 — Menor preço por produto</h2>
         <p className="text-sm text-muted-foreground">
-          Comprando cada item no mercado mais barato. Não substituímos marcas automaticamente.
+          Comprando cada item no mercado mais barato entre os selecionados. Não substituímos marcas automaticamente.
         </p>
 
-        {!perItem ? (
+        {perItemBreakdown.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">Sem dados suficientes para calcular.</p>
         ) : (
           <>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              <MiniStat label="Total combinado" value={brl(perItem.total)} />
-              <MiniStat label="Mercados a visitar" value={String(perItem.stores_needed)} />
+              <MiniStat label="Total combinado" value={brl(perItemTotal)} />
+              <MiniStat label="Mercados a visitar" value={String(storesNeeded)} />
               <MiniStat
                 label="Economia vs. compra completa"
-                value={data.savings == null ? "—" : brl(data.savings)}
-                highlight={data.savings != null && data.savings > 0}
+                value={savings == null ? "—" : brl(savings)}
+                highlight={savings != null && savings > 0}
               />
             </div>
 
-            {perItem.missing_names && perItem.missing_names.length > 0 && (
+            {perItemMissing.length > 0 && (
               <Alert className="mt-3">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Itens indisponíveis em qualquer mercado: {perItem.missing_names.join(", ")}.
+                  Itens indisponíveis nos mercados selecionados: {perItemMissing.join(", ")}.
                 </AlertDescription>
               </Alert>
             )}
@@ -537,7 +665,7 @@ function ComparisonPanel({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {perItem.breakdown.map((b) => (
+                  {perItemBreakdown.map((b) => (
                     <TableRow key={b.product_id}>
                       <TableCell className="font-medium">{b.product_name}</TableCell>
                       <TableCell>{b.store_name}</TableCell>
@@ -552,7 +680,121 @@ function ComparisonPanel({
           </>
         )}
       </section>
+
+      {/* Tabela comparativa completa: cada produto x cada mercado selecionado */}
+      <PriceMatrixTable items={data.items} stores={filteredStores} />
     </div>
+  );
+}
+
+function StoreFilterBar({
+  stores,
+  selected,
+  onChange,
+}: {
+  stores: StoreSummary[];
+  selected: Set<string>;
+  onChange: (next: Set<string>) => void;
+}) {
+  function toggle(storeId: string) {
+    const next = new Set(selected);
+    if (next.has(storeId)) next.delete(storeId);
+    else next.add(storeId);
+    onChange(next);
+  }
+
+  return (
+    <Card className="p-4">
+      <p className="text-sm font-medium">Mercados a comparar</p>
+      <p className="text-xs text-muted-foreground">
+        Desmarque os que você não quer considerar nos cálculos abaixo.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-4">
+        {stores.map((s) => (
+          <div key={s.store_id} className="flex items-center gap-2">
+            <Checkbox
+              id={`store-${s.store_id}`}
+              checked={selected.has(s.store_id)}
+              onCheckedChange={() => toggle(s.store_id)}
+            />
+            <Label htmlFor={`store-${s.store_id}`} className="cursor-pointer text-sm font-normal">
+              {s.store_name}
+            </Label>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function PriceMatrixTable({
+  items,
+  stores,
+}: {
+  items: ComparisonPayload["items"];
+  stores: StoreSummary[];
+}) {
+  if (stores.length === 0) {
+    return (
+      <section>
+        <h2 className="text-lg font-semibold">Tabela comparativa</h2>
+        <p className="mt-3 text-sm text-muted-foreground">Selecione ao menos um mercado acima.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section>
+      <h2 className="text-lg font-semibold">Tabela comparativa</h2>
+      <p className="text-sm text-muted-foreground">
+        Preço unitário de cada produto em cada mercado selecionado. O menor preço de cada linha aparece em destaque.
+      </p>
+      <Card className="mt-3 overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="sticky left-0 bg-card">Produto</TableHead>
+              {stores.map((s) => (
+                <TableHead key={s.store_id} className="text-right whitespace-nowrap">
+                  {s.store_name}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.map((item) => {
+              const prices = stores.map((s) => {
+                const line = s.lines.find((l) => l.product_id === item.product_id);
+                return line && !line.missing ? line.unit_price : null;
+              });
+              const validPrices = prices.filter((p): p is number => p != null);
+              const min = validPrices.length ? Math.min(...validPrices) : null;
+
+              return (
+                <TableRow key={item.product_id}>
+                  <TableCell className="sticky left-0 bg-card font-medium">{item.product_name}</TableCell>
+                  {stores.map((s, idx) => {
+                    const price = prices[idx];
+                    const isBest = price != null && min != null && price === min;
+                    return (
+                      <TableCell
+                        key={s.store_id}
+                        className={cn(
+                          "text-right tabular-nums",
+                          isBest ? "bg-green-50 font-semibold text-green-700 dark:bg-green-950/30 dark:text-green-400" : "",
+                        )}
+                      >
+                        {price == null ? <span className="text-muted-foreground">—</span> : brl(price)}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </Card>
+    </section>
   );
 }
 
