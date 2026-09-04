@@ -1,0 +1,58 @@
+name: Coleta Kawakami Marília
+
+on:
+  schedule:
+    # 09:00 America/Sao_Paulo (UTC-3, sem horário de verão no Brasil)
+    - cron: "0 12 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: coleta-kawakami
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r scripts/collectors/requirements.txt
+
+      - name: Criar .env a partir dos secrets
+        env:
+          INGEST_URL: ${{ secrets.INGEST_URL }}
+          INGEST_SECRET: ${{ secrets.INGEST_SECRET }}
+          KAWAKAMI_STORE_ID: ${{ secrets.KAWAKAMI_STORE_ID }}
+          FINALIZE_CATEGORY_URL: ${{ secrets.FINALIZE_CATEGORY_URL }}
+        run: |
+          cat > .env <<EOF
+          INGEST_URL=${INGEST_URL}
+          INGEST_SECRET=${INGEST_SECRET}
+          KAWAKAMI_STORE_ID=${KAWAKAMI_STORE_ID}
+          FINALIZE_CATEGORY_URL=${FINALIZE_CATEGORY_URL}
+          EOF
+
+      - name: Rodar coleta Kawakami
+        env:
+          KAWAKAMI_PAGES: "250"
+          CATEGORY_DELAY: "8"
+        run: bash scripts/run_kawakami_all.sh
+
+      - name: Enviar logs como artefato
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-kawakami-${{ github.run_id }}
+          path: logs/
+          retention-days: 14
+          if-no-files-found: ignore
