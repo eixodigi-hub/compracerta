@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 
-CONFIANCA_STORE_ID = "4f97f5d6-6a17-46ab-bf63-b3724abef9ff"
+CONFIANCA_STORE_ID = "744b59fb-1bf9-4235-a900-fcea7fd1cfec"
 TAUSTE_STORE_ID = "9cc4a9b1-5bc1-48e8-b3ff-c89fa7009b02"
 
 EXCLUDED_PAIRS = {

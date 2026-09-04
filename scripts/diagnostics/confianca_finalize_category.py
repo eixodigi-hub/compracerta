@@ -16,7 +16,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 ENV_FILE = ROOT_DIR / ".env"
 LOG_DIR = ROOT_DIR / "logs"
 
-STORE_ID = "4f97f5d6-6a17-46ab-bf63-b3724abef9ff"
+STORE_ID = "744b59fb-1bf9-4235-a900-fcea7fd1cfec"
 
 # Mesmas chaves de scripts/collectors/confianca_marilia.py::CATEGORIES.
 CATEGORY_CHOICES = (

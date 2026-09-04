@@ -17,7 +17,7 @@ STATE_DIR = ROOT_DIR / ".collector_state"
 TOTALS_FILE = STATE_DIR / "confianca_category_totals.json"
 
 EXPECTED_STORE_ID = (
-    "4f97f5d6-6a17-46ab-bf63-b3724abef9ff"
+    "744b59fb-1bf9-4235-a900-fcea7fd1cfec"
 )
 
 BATCH_SIZE = 50

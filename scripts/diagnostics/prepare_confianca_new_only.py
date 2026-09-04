@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 LOGS = ROOT / "logs"
 ENV = ROOT / ".env"
 
-STORE_ID = "4f97f5d6-6a17-46ab-bf63-b3724abef9ff"
+STORE_ID = "744b59fb-1bf9-4235-a900-fcea7fd1cfec"
 
 
 def load_env():

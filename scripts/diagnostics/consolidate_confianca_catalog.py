@@ -239,7 +239,7 @@ output = {
     "generated_at": datetime.now().isoformat(),
     "dry_run": True,
     "store_id": (
-        "4f97f5d6-6a17-46ab-bf63-b3724abef9ff"
+        "744b59fb-1bf9-4235-a900-fcea7fd1cfec"
     ),
     "source": "confianca_marilia",
     "categories": CATEGORY_PRIORITY,
