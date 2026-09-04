@@ -46,4 +46,11 @@ export const SOURCE_CATEGORY_TO_SLUG: Record<string, string> = {
   matinais_sobremesas: "alimentos",
   mercearia: "alimentos",
   perfumaria_higiene: "higiene-pessoal",
+
+  // Atacadão (chaves não compartilhadas com Spani/Kawakami — os
+  // departamentos deles agrupam diferente)
+  limpeza: "limpeza",
+  padaria_matinais: "padaria",
+  frios_congelados: "alimentos",
+  cafeteria: "alimentos",
 };
