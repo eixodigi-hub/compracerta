@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ImageOff, Store, Clock, GitCompareArrows, Plus, Trophy, Equal, Loader2 } from "lucide-react";
+import { ImageOff, Store, Clock, GitCompareArrows, Plus, Trophy, Equal, Loader2, Bell, BellRing } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SearchProductRow, SearchProductOffer } from "@/lib/search-queries";
 
@@ -42,10 +42,16 @@ export function ProductCard({
   product,
   onAddToList,
   addingToList,
+  onToggleAlert,
+  alerted,
+  alertPending,
 }: {
   product: SearchProductRow;
   onAddToList?: (p: SearchProductRow) => void;
   addingToList?: boolean;
+  onToggleAlert?: (p: SearchProductRow) => void;
+  alerted?: boolean;
+  alertPending?: boolean;
 }) {
   const qty = formatQty(product.quantity, product.unit);
   const discount = Math.round(product.max_discount_pct);
@@ -201,6 +207,26 @@ export function ProductCard({
             <Plus className="h-4 w-4" aria-hidden="true" />
           )}
         </Button>
+        {onToggleAlert && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => onToggleAlert(product)}
+            disabled={!product.is_canonical || alertPending}
+            aria-label={alerted ? "Remover aviso de promoção" : "Avisar quando entrar em promoção"}
+            title={alerted ? "Remover aviso de promoção" : "Avisar quando entrar em promoção"}
+            className={cn(alerted && "border-primary text-primary")}
+          >
+            {alertPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : alerted ? (
+              <BellRing className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <Bell className="h-4 w-4" aria-hidden="true" />
+            )}
+          </Button>
+        )}
       </div>
     </Card>
   );

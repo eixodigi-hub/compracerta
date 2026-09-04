@@ -30,6 +30,7 @@ import {
 } from "@/lib/search-queries";
 import { categoriesQuery, marketsQuery } from "@/lib/queries";
 import { useAddToList } from "@/hooks/use-add-to-list";
+import { usePromoAlert } from "@/hooks/use-promo-alert";
 
 const searchSchema = z.object({
   q: fallback(z.string(), "").default(""),
@@ -79,6 +80,7 @@ function PesquisarPage() {
   const [qDraft, setQDraft] = useState(search.q);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const { addToList, addingId } = useAddToList();
+  const { alertedIds, toggleAlert, pendingId: alertPendingId } = usePromoAlert();
 
   function applyQuery(nextQuery: string) {
     navigate({
@@ -462,6 +464,9 @@ function PesquisarPage() {
                   product={p}
                   onAddToList={(product) => addToList(product.id)}
                   addingToList={addingId === p.id}
+                  onToggleAlert={(product) => toggleAlert(product.id, product.name)}
+                  alerted={alertedIds.has(p.id)}
+                  alertPending={alertPendingId === p.id}
                 />
               ))}
             </div>

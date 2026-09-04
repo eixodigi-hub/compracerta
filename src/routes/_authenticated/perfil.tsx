@@ -1,11 +1,30 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LogOut, User as UserIcon, ShieldAlert } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  LogOut,
+  User as UserIcon,
+  ShieldAlert,
+  Search,
+  Bell,
+  ImageOff,
+  Trash2,
+  Sparkles,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import {
+  promoAlertsOptions,
+  subscribeAlert,
+  unsubscribeAlertById,
+  type PromoAlert,
+} from "@/lib/promo-alert-queries";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
   head: () => ({
@@ -76,19 +95,17 @@ function PerfilPage() {
         </Button>
       </div>
 
-      <div className="mt-8 grid gap-4 md:grid-cols-2">
+      <div className="mt-8">
         <Card className="p-5">
           <h2 className="font-semibold">Listas salvas</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Suas listas de compras aparecerão aqui.
           </p>
         </Card>
-        <Card className="p-5">
-          <h2 className="font-semibold">Preferências</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Mercados favoritos e alertas de preço em breve.
-          </p>
-        </Card>
+      </div>
+
+      <div className="mt-6">
+        <PromoAlertsCard userEmail={user?.email ?? null} />
       </div>
 
       {isAdmin.data && (
@@ -102,5 +119,202 @@ function PerfilPage() {
         </div>
       )}
     </div>
+  );
+}
+
+/* --------------------------- Promo alerts --------------------------- */
+
+function PromoAlertsCard({ userEmail }: { userEmail: string | null }) {
+  const qc = useQueryClient();
+  const alertsQuery = useQuery(promoAlertsOptions());
+  const [q, setQ] = useState("");
+  const [debounced, setDebounced] = useState("");
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(q), 300);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const suggestQuery = useQuery({
+    queryKey: ["product-suggest-alerts", debounced],
+    enabled: debounced.trim().length >= 2,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("search_canonical_products", {
+        q: debounced,
+        max_results: 8,
+      });
+      if (error) throw error;
+      return (data ?? []) as Array<{
+        id: string;
+        name: string;
+        brand: string | null;
+        quantity: number | null;
+        unit: string | null;
+      }>;
+    },
+  });
+
+  const alertedIds = new Set((alertsQuery.data ?? []).map((a) => a.canonical_product_id));
+
+  const addMut = useMutation({
+    mutationFn: (productId: string) => subscribeAlert(productId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["promo-alerts"] });
+      qc.invalidateQueries({ queryKey: ["promo-alert-ids"] });
+      setQ("");
+      setOpen(false);
+      toast.success("Produto adicionado aos seus alertas");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const removeMut = useMutation({
+    mutationFn: (alertId: string) => unsubscribeAlertById(alertId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["promo-alerts"] });
+      qc.invalidateQueries({ queryKey: ["promo-alert-ids"] });
+      toast.success("Alerta removido");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const alerts = alertsQuery.data ?? [];
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-center gap-2">
+        <Bell className="h-5 w-5 text-primary" aria-hidden="true" />
+        <h2 className="font-semibold">Alertas de promoção</h2>
+      </div>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Escolha os produtos que você quer acompanhar. Assim que um deles entrar em promoção em
+        algum mercado, avisamos por e-mail{userEmail ? ` em ${userEmail}` : ""}.
+      </p>
+
+      <div className="relative mt-4">
+        <Label htmlFor="alert-search" className="sr-only">
+          Buscar produto
+        </Label>
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          id="alert-search"
+          value={q}
+          onChange={(e) => {
+            setQ(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          placeholder="Digite o nome de um produto para acompanhar…"
+          className="pl-9"
+        />
+        {open && debounced.trim().length >= 2 && (
+          <div className="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-md border border-border bg-popover shadow-md">
+            {suggestQuery.isLoading && (
+              <p className="p-3 text-sm text-muted-foreground">Buscando…</p>
+            )}
+            {!suggestQuery.isLoading && (suggestQuery.data?.length ?? 0) === 0 && (
+              <p className="p-3 text-sm text-muted-foreground">Nenhum produto encontrado.</p>
+            )}
+            {suggestQuery.data?.map((p) => {
+              const already = alertedIds.has(p.id);
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  disabled={already || addMut.isPending}
+                  onClick={() => addMut.mutate(p.id)}
+                  className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-accent disabled:cursor-default disabled:opacity-60"
+                >
+                  <span className="min-w-0 truncate">
+                    <span className="font-medium">{p.name}</span>
+                    {p.brand ? <span className="ml-2 text-muted-foreground">{p.brand}</span> : null}
+                  </span>
+                  {already ? (
+                    <span className="shrink-0 text-xs text-muted-foreground">Já acompanhando</span>
+                  ) : p.quantity != null ? (
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {p.quantity} {p.unit ?? ""}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4">
+        {alertsQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">Carregando…</p>
+        ) : alerts.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Você ainda não está acompanhando nenhum produto. Use a busca acima.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border rounded-lg border border-border">
+            {alerts.map((a) => (
+              <PromoAlertRow
+                key={a.alert_id}
+                alert={a}
+                onRemove={() => removeMut.mutate(a.alert_id)}
+                removing={removeMut.isPending && removeMut.variables === a.alert_id}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+function PromoAlertRow({
+  alert,
+  onRemove,
+  removing,
+}: {
+  alert: PromoAlert;
+  onRemove: () => void;
+  removing: boolean;
+}) {
+  const brl = (v: number | null) =>
+    v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  return (
+    <li className="flex items-center gap-3 p-3">
+      <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-secondary">
+        {alert.image_url ? (
+          <img
+            src={alert.image_url}
+            alt={alert.name}
+            className="h-full w-full object-contain"
+            loading="lazy"
+          />
+        ) : (
+          <ImageOff className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{alert.name}</p>
+        <p className="truncate text-xs text-muted-foreground">
+          {alert.brand ?? "Sem marca"}
+          {alert.quantity != null ? ` · ${alert.quantity} ${alert.unit ?? ""}` : ""}
+        </p>
+        {alert.has_promotion ? (
+          <Badge className="mt-1 gap-1 bg-promo text-promo-foreground hover:bg-promo">
+            <Sparkles className="h-3 w-3" aria-hidden="true" />
+            Em promoção agora — {brl(alert.min_price)}
+            {alert.best_store_name ? ` na ${alert.best_store_name}` : ""}
+          </Badge>
+        ) : (
+          <p className="mt-1 text-xs text-muted-foreground">
+            {alert.min_price != null ? `Sem promoção agora — ${brl(alert.min_price)}` : "Aguardando preço"}
+          </p>
+        )}
+      </div>
+      <Button size="icon" variant="ghost" onClick={onRemove} disabled={removing} aria-label="Remover alerta">
+        <Trash2 className="h-4 w-4" aria-hidden="true" />
+      </Button>
+    </li>
   );
 }

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ExternalLink, TrendingDown, TrendingUp, AlertCircle, Loader2, Plus } from "lucide-react";
+import { ExternalLink, TrendingDown, TrendingUp, AlertCircle, Loader2, Plus, Bell, BellRing } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { useAddToList } from "@/hooks/use-add-to-list";
+import { usePromoAlert } from "@/hooks/use-promo-alert";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -79,6 +80,7 @@ function ProdutoPage() {
   const { data: history } = useSuspenseQuery(priceHistoryOptions(id, 30));
   const { data: stats } = useSuspenseQuery(priceStatsOptions(id, 30));
   const { addToList, addingId } = useAddToList();
+  const { alertedIds, toggleAlert, pendingId: alertPendingId } = usePromoAlert();
 
   if (!data.product) {
     return (
@@ -131,18 +133,34 @@ function ProdutoPage() {
           <p className="mt-4 text-sm text-muted-foreground">
             Última atualização: {dateTimeFmt(data.last_updated)}
           </p>
-          <Button
-            className="mt-4"
-            onClick={() => addToList(p.id)}
-            disabled={addingId === p.id}
-          >
-            {addingId === p.id ? (
-              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
-            )}
-            Adicionar à lista
-          </Button>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button
+              onClick={() => addToList(p.id)}
+              disabled={addingId === p.id}
+            >
+              {addingId === p.id ? (
+                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              )}
+              Adicionar à lista
+            </Button>
+            <Button
+              variant="outline"
+              className={alertedIds.has(p.id) ? "border-primary text-primary" : undefined}
+              onClick={() => toggleAlert(p.id, p.name)}
+              disabled={alertPendingId === p.id}
+            >
+              {alertPendingId === p.id ? (
+                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : alertedIds.has(p.id) ? (
+                <BellRing className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              ) : (
+                <Bell className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              )}
+              {alertedIds.has(p.id) ? "Avisando na promoção" : "Avisar na promoção"}
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -338,6 +338,38 @@ export type Database = {
           },
         ]
       }
+      promo_alerts: {
+        Row: {
+          canonical_product_id: string
+          created_at: string
+          id: string
+          notified_at: string | null
+          user_id: string
+        }
+        Insert: {
+          canonical_product_id: string
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          user_id: string
+        }
+        Update: {
+          canonical_product_id?: string
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_alerts_canonical_product_id_fkey"
+            columns: ["canonical_product_id"]
+            isOneToOne: false
+            referencedRelation: "canonical_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shopping_list_items: {
         Row: {
           allow_similar_products: boolean
@@ -654,6 +686,23 @@ export type Database = {
           p_sync_token: string
         }
         Returns: Json
+      }
+      get_my_promo_alerts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          alert_id: string
+          best_store_name: string | null
+          brand: string | null
+          canonical_product_id: string
+          created_at: string
+          has_promotion: boolean
+          image_url: string | null
+          min_price: number | null
+          name: string
+          quantity: number | null
+          reference_price: number | null
+          unit: string | null
+        }[]
       }
       get_price_history: {
         Args: { p_days?: number; p_product_id: string }
