@@ -252,9 +252,14 @@ def get_json(
 def _extract_qty(name: str) -> tuple[str | None, str | None]:
     if not name:
         return None, None
-    m = RE_QTY.search(name)
-    if not m:
+    # Usa a ÚLTIMA ocorrência, não a primeira: nomes às vezes trazem
+    # um número+unidade cedo que não é o tamanho da embalagem (ex.:
+    # "Bebida Láctea Yopro 15g de Proteína ... 250ml" — "15g" é a
+    # chamada nutricional, "250ml" no fim é o tamanho de verdade).
+    matches = list(RE_QTY.finditer(name))
+    if not matches:
         return None, None
+    m = matches[-1]
     qty = m.group(1).replace(",", ".")
     unit = m.group(2).lower()
     return qty, unit
