@@ -726,6 +726,31 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      home_category_feed: {
+        Args: {
+          products_per_category?: number
+        }
+        Returns: {
+          barcode: string
+          brand: string
+          category_icon: string
+          category_id: string
+          category_name: string
+          category_slug: string
+          has_promotion: boolean
+          id: string
+          image_url: string
+          last_updated: string
+          market_count: number
+          max_discount_pct: number
+          min_price: number
+          name: string
+          offers: Json
+          quantity: number
+          reference_price: number
+          unit: string
+        }[]
+      }
       search_products: {
         Args: {
           brand_filter?: string

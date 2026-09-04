@@ -39,10 +39,12 @@ export function OfferCard({
           <ImageOff className="h-8 w-8" aria-hidden="true" />
         </div>
       )}
-      <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-promo px-2.5 py-1 text-xs font-semibold text-promo-foreground shadow">
-        <Tag className="h-3 w-3" aria-hidden="true" />
-        Oferta
-      </span>
+      {offer.oldPrice && (
+        <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-promo px-2.5 py-1 text-xs font-semibold text-promo-foreground shadow">
+          <Tag className="h-3 w-3" aria-hidden="true" />
+          Oferta
+        </span>
+      )}
     </div>
   );
 

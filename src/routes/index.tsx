@@ -5,18 +5,37 @@ import { Search, ListChecks, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+} from "@/components/ui/carousel";
 import { SectionHeader } from "@/components/ui-app/SectionHeader";
-import { CategoryCard } from "@/components/ui-app/CategoryCard";
 import { OfferCard, type Offer } from "@/components/ui-app/OfferCard";
 import { MarketCard } from "@/components/ui-app/MarketCard";
+import { getCategoryIcon } from "@/lib/category-icons";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  categoriesQuery,
   marketsQuery,
-  topOffersQuery,
   lastUpdatedQuery,
+  homeCategoryFeedQuery,
+  type HomeCategorySection,
+  type HomeCategoryProductRow,
 } from "@/lib/queries";
+
+const PESQUISAR_DEFAULTS = {
+  q: "",
+  brand: "",
+  store: "",
+  available: false,
+  offers: false,
+  min: 0,
+  max: 0,
+  sort: "price_asc" as const,
+};
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -32,14 +51,83 @@ function formatUpdated(iso: string | null) {
   return `Atualizado em ${d.toLocaleDateString("pt-BR")} às ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
+function toOfferCard(row: HomeCategoryProductRow): Offer {
+  const cheapest = row.offers[0];
+  const showsDiscount =
+    row.has_promotion && row.reference_price != null && row.reference_price > row.min_price;
+  return {
+    id: row.id,
+    product: row.name,
+    market: row.market_count > 1 ? `${row.market_count} mercados` : (cheapest?.store_name ?? "—"),
+    price: formatCurrency(row.min_price),
+    oldPrice: showsDiscount ? formatCurrency(row.reference_price as number) : undefined,
+    validUntil: cheapest?.promotion_end_at
+      ? new Date(cheapest.promotion_end_at).toLocaleDateString("pt-BR")
+      : undefined,
+    imageUrl: row.image_url,
+    canonicalId: row.id,
+  };
+}
+
+function CategorySection({
+  section,
+  onAddToList,
+  addingId,
+}: {
+  section: HomeCategorySection;
+  onAddToList: (offer: Offer) => void;
+  addingId: string | null;
+}) {
+  const Icon = getCategoryIcon(section.category_icon);
+
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-6">
+      <SectionHeader
+        title={
+          <span className="inline-flex items-center gap-2">
+            <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
+            {section.category_name}
+          </span>
+        }
+        action={
+          <Link
+            to="/pesquisar"
+            search={{ ...PESQUISAR_DEFAULTS, category: section.category_slug }}
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            Ver categoria completa
+          </Link>
+        }
+      />
+      <Carousel opts={{ align: "start", dragFree: true }} className="mt-3">
+        <CarouselContent>
+          {section.products.map((row) => (
+            <CarouselItem
+              key={row.id}
+              className="basis-[72%] sm:basis-1/3 md:basis-1/4 lg:basis-1/5"
+            >
+              <OfferCard
+                offer={toOfferCard(row)}
+                onAddToList={onAddToList}
+                adding={addingId === row.id}
+              />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="static left-auto top-auto h-8 w-8 -translate-y-0 translate-x-0" />
+        <CarouselNext className="static left-auto top-auto h-8 w-8 -translate-y-0 translate-x-0" />
+      </Carousel>
+    </section>
+  );
+}
+
 function Index() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [q, setQ] = useState("");
   const [addingId, setAddingId] = useState<string | null>(null);
-  const categories = useQuery(categoriesQuery);
   const markets = useQuery(marketsQuery);
-  const offers = useQuery(topOffersQuery);
+  const categoryFeed = useQuery(homeCategoryFeedQuery);
   const lastUpdated = useQuery(lastUpdatedQuery);
 
   function handleSearch(e: FormEvent<HTMLFormElement>) {
@@ -89,28 +177,6 @@ function Index() {
     }
   }
 
-  const offerCards: Offer[] =
-    offers.data?.map((o) => {
-      const sp = o.store_products;
-      const cp = sp?.canonical_products;
-      const productName = cp?.name ?? sp?.external_name ?? "Produto";
-      return {
-        id: o.id,
-        product: productName,
-        market: sp?.stores?.name ?? "—",
-        price: formatCurrency(Number(o.effective_price)),
-        oldPrice:
-          o.promotional_price != null && o.regular_price != null
-            ? formatCurrency(Number(o.regular_price))
-            : undefined,
-        validUntil: o.promotion_end_at
-          ? new Date(o.promotion_end_at).toLocaleDateString("pt-BR")
-          : undefined,
-        imageUrl: cp?.image_url ?? sp?.image_url ?? null,
-        canonicalId: cp?.id ?? null,
-      };
-    }) ?? [];
-
   return (
     <div>
       <section className="bg-primary-soft/60">
@@ -152,51 +218,33 @@ function Index() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-8 md:py-10">
-        <SectionHeader
-          title="Maiores ofertas de hoje"
-          subtitle="As promoções mais fortes dos supermercados"
-          action={
-            <Link to="/ofertas" className="text-sm font-medium text-primary hover:underline">
-              Ver todas
-            </Link>
-          }
-        />
-        {offers.isLoading ? (
-          <p className="text-sm text-muted-foreground">Carregando ofertas...</p>
-        ) : offerCards.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Ainda não há ofertas cadastradas. Assim que o coletor enviar os primeiros preços, elas aparecerão aqui.
-          </p>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {offerCards.map((o) => (
-              <OfferCard
-                key={o.id}
-                offer={o}
-                onAddToList={handleAddToList}
-                adding={addingId === o.id}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+      <div className="mx-auto max-w-6xl px-4 pt-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold md:text-xl">Ofertas por categoria</h2>
+          <Link to="/ofertas" className="text-sm font-medium text-primary hover:underline">
+            Ver todas as ofertas
+          </Link>
+        </div>
+      </div>
 
-      <section className="mx-auto max-w-6xl px-4 py-4 md:py-6">
-        <SectionHeader title="Categorias" subtitle="Explore por seção do mercado" />
-        {categories.isLoading ? (
-          <p className="text-sm text-muted-foreground">Carregando...</p>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
-            {(categories.data ?? []).map((c) => (
-              <CategoryCard
-                key={c.id}
-                category={{ slug: c.slug, name: c.name, icon: c.icon }}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+      {categoryFeed.isLoading ? (
+        <p className="mx-auto max-w-6xl px-4 py-6 text-sm text-muted-foreground">
+          Carregando categorias...
+        </p>
+      ) : (categoryFeed.data?.length ?? 0) === 0 ? (
+        <p className="mx-auto max-w-6xl px-4 py-6 text-sm text-muted-foreground">
+          Ainda não há produtos categorizados. Assim que o coletor enviar os primeiros preços, eles aparecerão aqui organizados por categoria.
+        </p>
+      ) : (
+        categoryFeed.data!.map((section) => (
+          <CategorySection
+            key={section.category_id}
+            section={section}
+            onAddToList={handleAddToList}
+            addingId={addingId}
+          />
+        ))
+      )}
 
       <section className="mx-auto max-w-6xl px-4 py-8 md:py-10">
         <SectionHeader

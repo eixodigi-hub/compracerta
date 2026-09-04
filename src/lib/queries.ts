@@ -73,6 +73,69 @@ export const topOffersQuery = queryOptions({
   },
 });
 
+export type HomeCategoryProductRow = {
+  category_id: string;
+  category_slug: string;
+  category_name: string;
+  category_icon: string | null;
+  id: string;
+  name: string;
+  brand: string | null;
+  quantity: number | null;
+  unit: string | null;
+  image_url: string | null;
+  barcode: string | null;
+  min_price: number;
+  reference_price: number | null;
+  max_discount_pct: number;
+  market_count: number;
+  last_updated: string;
+  has_promotion: boolean;
+  offers: Array<{
+    store_id: string;
+    store_name: string;
+    effective_price: number | null;
+    promotion_end_at: string | null;
+  }>;
+};
+
+export type HomeCategorySection = {
+  category_id: string;
+  category_slug: string;
+  category_name: string;
+  category_icon: string | null;
+  products: HomeCategoryProductRow[];
+};
+
+const HOME_PRODUCTS_PER_CATEGORY = 10;
+
+export const homeCategoryFeedQuery = queryOptions({
+  queryKey: ["home", "category-feed", HOME_PRODUCTS_PER_CATEGORY],
+  queryFn: async () => {
+    const { data, error } = await supabase.rpc("home_category_feed", {
+      products_per_category: HOME_PRODUCTS_PER_CATEGORY,
+    });
+    if (error) throw error;
+    const rows = (data ?? []) as HomeCategoryProductRow[];
+    const sections = new Map<string, HomeCategorySection>();
+    for (const row of rows) {
+      let section = sections.get(row.category_id);
+      if (!section) {
+        section = {
+          category_id: row.category_id,
+          category_slug: row.category_slug,
+          category_name: row.category_name,
+          category_icon: row.category_icon,
+          products: [],
+        };
+        sections.set(row.category_id, section);
+      }
+      section.products.push(row);
+    }
+    return Array.from(sections.values());
+  },
+});
+
 export const lastUpdatedQuery = queryOptions({
   queryKey: ["current_prices", "last-updated"],
   queryFn: async () => {

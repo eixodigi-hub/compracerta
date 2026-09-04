@@ -9,40 +9,34 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as PesquisarRouteImport } from './routes/pesquisar'
-import { Route as OfertasRouteImport } from './routes/ofertas'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProdutoIdRouteImport } from './routes/produto.$id'
-import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
-import { Route as AuthenticatedListaRouteImport } from './routes/_authenticated/lista'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as OfertasRouteImport } from './routes/ofertas'
+import { Route as PesquisarRouteImport } from './routes/pesquisar'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedListaRouteImport } from './routes/_authenticated/lista'
+import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as ProdutoIdRouteImport } from './routes/produto.$id'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
-import { Route as ApiPublicIngestProductsRouteImport } from './routes/api/public/ingest-products'
-import { Route as ApiPublicFinalizeCategorySyncRouteImport } from './routes/api/public/finalize-category-sync'
-import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
-import { Route as AuthenticatedAdminProdutosColetadosRouteImport } from './routes/_authenticated/admin/produtos-coletados'
-import { Route as AuthenticatedAdminProdutosCanonicosRouteImport } from './routes/_authenticated/admin/produtos-canonicos'
-import { Route as AuthenticatedAdminPrecosRouteImport } from './routes/_authenticated/admin/precos'
-import { Route as AuthenticatedAdminPendentesRouteImport } from './routes/_authenticated/admin/pendentes'
-import { Route as AuthenticatedAdminMercadosRouteImport } from './routes/_authenticated/admin/mercados'
 import { Route as AuthenticatedAdminExecucoesRouteImport } from './routes/_authenticated/admin/execucoes'
+import { Route as AuthenticatedAdminMercadosRouteImport } from './routes/_authenticated/admin/mercados'
+import { Route as AuthenticatedAdminPendentesRouteImport } from './routes/_authenticated/admin/pendentes'
+import { Route as AuthenticatedAdminPrecosRouteImport } from './routes/_authenticated/admin/precos'
+import { Route as AuthenticatedAdminProdutosCanonicosRouteImport } from './routes/_authenticated/admin/produtos-canonicos'
+import { Route as AuthenticatedAdminProdutosColetadosRouteImport } from './routes/_authenticated/admin/produtos-coletados'
+import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
+import { Route as ApiPublicFinalizeCategorySyncRouteImport } from './routes/api/public/finalize-category-sync'
+import { Route as ApiPublicIngestProductsRouteImport } from './routes/api/public/ingest-products'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PesquisarRoute = PesquisarRouteImport.update({
-  id: '/pesquisar',
-  path: '/pesquisar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OfertasRoute = OfertasRouteImport.update({
-  id: '/ofertas',
-  path: '/ofertas',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -50,23 +44,24 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const OfertasRoute = OfertasRouteImport.update({
+  id: '/ofertas',
+  path: '/ofertas',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const PesquisarRoute = PesquisarRouteImport.update({
+  id: '/pesquisar',
+  path: '/pesquisar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProdutoIdRoute = ProdutoIdRouteImport.update({
-  id: '/produto/$id',
-  path: '/produto/$id',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
-  id: '/perfil',
-  path: '/perfil',
+const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedListaRoute = AuthenticatedListaRouteImport.update({
@@ -74,55 +69,25 @@ const AuthenticatedListaRoute = AuthenticatedListaRouteImport.update({
   path: '/lista',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ProdutoIdRoute = ProdutoIdRouteImport.update({
+  id: '/produto/$id',
+  path: '/produto/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
-const ApiPublicIngestProductsRoute = ApiPublicIngestProductsRouteImport.update({
-  id: '/api/public/ingest-products',
-  path: '/api/public/ingest-products',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicFinalizeCategorySyncRoute =
-  ApiPublicFinalizeCategorySyncRouteImport.update({
-    id: '/api/public/finalize-category-sync',
-    path: '/api/public/finalize-category-sync',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthenticatedAdminUsuariosRoute =
-  AuthenticatedAdminUsuariosRouteImport.update({
-    id: '/usuarios',
-    path: '/usuarios',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
-const AuthenticatedAdminProdutosColetadosRoute =
-  AuthenticatedAdminProdutosColetadosRouteImport.update({
-    id: '/produtos-coletados',
-    path: '/produtos-coletados',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
-const AuthenticatedAdminProdutosCanonicosRoute =
-  AuthenticatedAdminProdutosCanonicosRouteImport.update({
-    id: '/produtos-canonicos',
-    path: '/produtos-canonicos',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
-const AuthenticatedAdminPrecosRoute =
-  AuthenticatedAdminPrecosRouteImport.update({
-    id: '/precos',
-    path: '/precos',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
-const AuthenticatedAdminPendentesRoute =
-  AuthenticatedAdminPendentesRouteImport.update({
-    id: '/pendentes',
-    path: '/pendentes',
+const AuthenticatedAdminExecucoesRoute =
+  AuthenticatedAdminExecucoesRouteImport.update({
+    id: '/execucoes',
+    path: '/execucoes',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedAdminMercadosRoute =
@@ -131,12 +96,47 @@ const AuthenticatedAdminMercadosRoute =
     path: '/mercados',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
-const AuthenticatedAdminExecucoesRoute =
-  AuthenticatedAdminExecucoesRouteImport.update({
-    id: '/execucoes',
-    path: '/execucoes',
+const AuthenticatedAdminPendentesRoute =
+  AuthenticatedAdminPendentesRouteImport.update({
+    id: '/pendentes',
+    path: '/pendentes',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminPrecosRoute =
+  AuthenticatedAdminPrecosRouteImport.update({
+    id: '/precos',
+    path: '/precos',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminProdutosCanonicosRoute =
+  AuthenticatedAdminProdutosCanonicosRouteImport.update({
+    id: '/produtos-canonicos',
+    path: '/produtos-canonicos',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminProdutosColetadosRoute =
+  AuthenticatedAdminProdutosColetadosRouteImport.update({
+    id: '/produtos-coletados',
+    path: '/produtos-coletados',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminUsuariosRoute =
+  AuthenticatedAdminUsuariosRouteImport.update({
+    id: '/usuarios',
+    path: '/usuarios',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const ApiPublicFinalizeCategorySyncRoute =
+  ApiPublicFinalizeCategorySyncRouteImport.update({
+    id: '/api/public/finalize-category-sync',
+    path: '/api/public/finalize-category-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicIngestProductsRoute = ApiPublicIngestProductsRouteImport.update({
+  id: '/api/public/ingest-products',
+  path: '/api/public/ingest-products',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -282,32 +282,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pesquisar': {
-      id: '/pesquisar'
-      path: '/pesquisar'
-      fullPath: '/pesquisar'
-      preLoaderRoute: typeof PesquisarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ofertas': {
-      id: '/ofertas'
-      path: '/ofertas'
-      fullPath: '/ofertas'
-      preLoaderRoute: typeof OfertasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -317,25 +296,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/produto/$id': {
-      id: '/produto/$id'
-      path: '/produto/$id'
-      fullPath: '/produto/$id'
-      preLoaderRoute: typeof ProdutoIdRouteImport
+    '/ofertas': {
+      id: '/ofertas'
+      path: '/ofertas'
+      fullPath: '/ofertas'
+      preLoaderRoute: typeof OfertasRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/perfil': {
-      id: '/_authenticated/perfil'
-      path: '/perfil'
-      fullPath: '/perfil'
-      preLoaderRoute: typeof AuthenticatedPerfilRouteImport
+    '/pesquisar': {
+      id: '/pesquisar'
+      path: '/pesquisar'
+      fullPath: '/pesquisar'
+      preLoaderRoute: typeof PesquisarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/lista': {
@@ -345,12 +338,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedListaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+    '/_authenticated/perfil': {
+      id: '/_authenticated/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AuthenticatedPerfilRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/produto/$id': {
+      id: '/produto/$id'
+      path: '/produto/$id'
+      fullPath: '/produto/$id'
+      preLoaderRoute: typeof ProdutoIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
@@ -359,53 +359,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
-    '/api/public/ingest-products': {
-      id: '/api/public/ingest-products'
-      path: '/api/public/ingest-products'
-      fullPath: '/api/public/ingest-products'
-      preLoaderRoute: typeof ApiPublicIngestProductsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/finalize-category-sync': {
-      id: '/api/public/finalize-category-sync'
-      path: '/api/public/finalize-category-sync'
-      fullPath: '/api/public/finalize-category-sync'
-      preLoaderRoute: typeof ApiPublicFinalizeCategorySyncRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/admin/usuarios': {
-      id: '/_authenticated/admin/usuarios'
-      path: '/usuarios'
-      fullPath: '/admin/usuarios'
-      preLoaderRoute: typeof AuthenticatedAdminUsuariosRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/produtos-coletados': {
-      id: '/_authenticated/admin/produtos-coletados'
-      path: '/produtos-coletados'
-      fullPath: '/admin/produtos-coletados'
-      preLoaderRoute: typeof AuthenticatedAdminProdutosColetadosRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/produtos-canonicos': {
-      id: '/_authenticated/admin/produtos-canonicos'
-      path: '/produtos-canonicos'
-      fullPath: '/admin/produtos-canonicos'
-      preLoaderRoute: typeof AuthenticatedAdminProdutosCanonicosRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/precos': {
-      id: '/_authenticated/admin/precos'
-      path: '/precos'
-      fullPath: '/admin/precos'
-      preLoaderRoute: typeof AuthenticatedAdminPrecosRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/pendentes': {
-      id: '/_authenticated/admin/pendentes'
-      path: '/pendentes'
-      fullPath: '/admin/pendentes'
-      preLoaderRoute: typeof AuthenticatedAdminPendentesRouteImport
+    '/_authenticated/admin/execucoes': {
+      id: '/_authenticated/admin/execucoes'
+      path: '/execucoes'
+      fullPath: '/admin/execucoes'
+      preLoaderRoute: typeof AuthenticatedAdminExecucoesRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/admin/mercados': {
@@ -415,12 +373,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminMercadosRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
-    '/_authenticated/admin/execucoes': {
-      id: '/_authenticated/admin/execucoes'
-      path: '/execucoes'
-      fullPath: '/admin/execucoes'
-      preLoaderRoute: typeof AuthenticatedAdminExecucoesRouteImport
+    '/_authenticated/admin/pendentes': {
+      id: '/_authenticated/admin/pendentes'
+      path: '/pendentes'
+      fullPath: '/admin/pendentes'
+      preLoaderRoute: typeof AuthenticatedAdminPendentesRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/precos': {
+      id: '/_authenticated/admin/precos'
+      path: '/precos'
+      fullPath: '/admin/precos'
+      preLoaderRoute: typeof AuthenticatedAdminPrecosRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/produtos-canonicos': {
+      id: '/_authenticated/admin/produtos-canonicos'
+      path: '/produtos-canonicos'
+      fullPath: '/admin/produtos-canonicos'
+      preLoaderRoute: typeof AuthenticatedAdminProdutosCanonicosRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/produtos-coletados': {
+      id: '/_authenticated/admin/produtos-coletados'
+      path: '/produtos-coletados'
+      fullPath: '/admin/produtos-coletados'
+      preLoaderRoute: typeof AuthenticatedAdminProdutosColetadosRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/usuarios': {
+      id: '/_authenticated/admin/usuarios'
+      path: '/usuarios'
+      fullPath: '/admin/usuarios'
+      preLoaderRoute: typeof AuthenticatedAdminUsuariosRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/api/public/finalize-category-sync': {
+      id: '/api/public/finalize-category-sync'
+      path: '/api/public/finalize-category-sync'
+      fullPath: '/api/public/finalize-category-sync'
+      preLoaderRoute: typeof ApiPublicFinalizeCategorySyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/ingest-products': {
+      id: '/api/public/ingest-products'
+      path: '/api/public/ingest-products'
+      fullPath: '/api/public/ingest-products'
+      preLoaderRoute: typeof ApiPublicIngestProductsRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
