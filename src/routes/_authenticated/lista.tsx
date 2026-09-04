@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Pencil, Check, X, Search, ShoppingBasket, AlertCircle, Store as StoreIcon, Sparkles, TrendingDown } from "lucide-react";
+import { Plus, Trash2, Pencil, Check, X, Search, ShoppingBasket, AlertCircle, Store as StoreIcon, Sparkles, TrendingDown, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -116,6 +116,10 @@ function ListaPage() {
                 items={itemsQuery.data ?? []}
                 loading={itemsQuery.isLoading}
                 onChanged={() => invalidateAll(current.id)}
+                onSave={() => {
+                  invalidateAll(current.id);
+                  toast.success("Lista salva!");
+                }}
               />
               <ComparisonPanel
                 loading={cmpQuery.isLoading}
@@ -344,10 +348,12 @@ function ItemsPanel({
   items,
   loading,
   onChanged,
+  onSave,
 }: {
   items: ShoppingListItem[];
   loading: boolean;
   onChanged: () => void;
+  onSave: () => void;
 }) {
   const updateMut = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: { quantity?: number; allow_similar_products?: boolean } }) =>
@@ -421,6 +427,11 @@ function ItemsPanel({
           ))}
         </TableBody>
       </Table>
+      <div className="flex justify-end border-t p-3">
+        <Button onClick={onSave}>
+          <Save className="mr-1 h-4 w-4" /> Salvar lista
+        </Button>
+      </div>
     </Card>
   );
 }
