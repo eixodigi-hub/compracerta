@@ -199,6 +199,7 @@ export const Route = createFileRoute("/api/public/ingest-products")({
                 .upsert(
                   {
                     store_product_id: storeProductId,
+                    store_id,
                     scope_key: p.source_category,
                     last_seen_at: p.collected_at,
                     consecutive_misses: 0,

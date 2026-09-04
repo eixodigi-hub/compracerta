@@ -72,11 +72,15 @@ CATEGORIES=(
   limpeza
   pet_shop
   hortifruti
-  carnes
   padaria_matinais
   frios_congelados
-  cafeteria
 )
+# "carnes" e "cafeteria" ficam fora do loop diário: a loja de Marília
+# não tem oferta do vendedor nesses dois departamentos (confirmado por
+# inspeção — o catálogo geral do Atacadão tem produtos, mas nenhum com
+# oferta de "atacadaobr630"). Sempre voltam 0 produtos, o que o script
+# trata como falha de finalização — rodar todo dia só gera alerta
+# falso. Continuam suportados via --categoria se algum dia mudar.
 
 # Var própria (não a PAGES genérica do Tauste). Departamentos maiores
 # do Atacadão (mercearia ~3100 produtos, higiene ~1850) passam de 30

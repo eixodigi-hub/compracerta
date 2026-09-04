@@ -426,6 +426,7 @@ export type Database = {
           id: string
           last_seen_at: string | null
           scope_key: string
+          store_id: string
           store_product_id: string
           updated_at: string
         }
@@ -436,6 +437,7 @@ export type Database = {
           id?: string
           last_seen_at?: string | null
           scope_key: string
+          store_id: string
           store_product_id: string
           updated_at?: string
         }
@@ -446,6 +448,7 @@ export type Database = {
           id?: string
           last_seen_at?: string | null
           scope_key?: string
+          store_id?: string
           store_product_id?: string
           updated_at?: string
         }
@@ -455,6 +458,13 @@ export type Database = {
             columns: ["store_product_id"]
             isOneToOne: false
             referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_product_collection_scopes_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
