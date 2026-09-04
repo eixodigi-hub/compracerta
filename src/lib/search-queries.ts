@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { queryOptions } from "@tanstack/react-query";
+import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 export type SortBy = "relevance" | "price_asc" | "discount_desc" | "name_asc" | "recent";
 
@@ -58,6 +58,9 @@ export type SearchProductOffer = {
 export function searchProductsQuery(filters: SearchFilters) {
   return queryOptions({
     queryKey: ["search-products", filters],
+    // Mantém a lista anterior visível enquanto busca mais resultados
+    // (botão "Carregar mais"), em vez de piscar pra um spinner de novo.
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("search_products", {
         q: filters.q?.trim() || undefined,

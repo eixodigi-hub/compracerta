@@ -70,6 +70,9 @@ const SORT_KEYS = ["relevance", "price_asc", "discount_desc", "name_asc", "recen
 // busca, pra não disparar uma consulta a cada tecla.
 const LIVE_SEARCH_DEBOUNCE_MS = 350;
 
+const PAGE_SIZE = 30;
+const MAX_RESULTS = 300;
+
 function PesquisarPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/pesquisar" });
@@ -119,6 +122,23 @@ function PesquisarPage() {
     ? (search.sort as SortBy)
     : "price_asc";
 
+  const [limit, setLimit] = useState(PAGE_SIZE);
+  // Volta pra primeira página sempre que o filtro muda — senão o "carregar
+  // mais" de uma busca anterior ficaria valendo pra busca nova.
+  useEffect(() => {
+    setLimit(PAGE_SIZE);
+  }, [
+    search.q,
+    search.category,
+    search.brand,
+    search.store,
+    search.available,
+    search.offers,
+    search.min,
+    search.max,
+    sortBy,
+  ]);
+
   const results = useQuery(
     searchProductsQuery({
       q: search.q || undefined,
@@ -130,8 +150,15 @@ function PesquisarPage() {
       minPrice: search.min > 0 ? search.min : undefined,
       maxPrice: search.max > 0 ? search.max : undefined,
       sortBy,
+      limit,
     }),
   );
+
+  const canLoadMore =
+    !results.isLoading &&
+    (results.data?.length ?? 0) > 0 &&
+    (results.data?.length ?? 0) >= limit &&
+    limit < MAX_RESULTS;
 
   const categories = useQuery(categoriesQuery);
   const markets = useQuery(marketsQuery);
@@ -426,17 +453,34 @@ function PesquisarPage() {
               : "Digite algo acima ou escolha uma categoria para começar."}
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {results.data!.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                onAddToList={() =>
-                  toast.info("Em breve: monte listas permanentes ao entrar na sua conta.")
-                }
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {results.data!.map((p) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  onAddToList={() =>
+                    toast.info("Em breve: monte listas permanentes ao entrar na sua conta.")
+                  }
+                />
+              ))}
+            </div>
+            {canLoadMore && (
+              <div className="mt-6 flex justify-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setLimit((l) => Math.min(l + PAGE_SIZE, MAX_RESULTS))}
+                  disabled={results.isFetching}
+                >
+                  {results.isFetching ? (
+                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : null}
+                  Carregar mais
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
