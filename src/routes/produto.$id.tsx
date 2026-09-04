@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ExternalLink, TrendingDown, TrendingUp, AlertCircle } from "lucide-react";
+import { ExternalLink, TrendingDown, TrendingUp, AlertCircle, Loader2, Plus } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -11,6 +11,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Button } from "@/components/ui/button";
+import { useAddToList } from "@/hooks/use-add-to-list";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -77,6 +78,7 @@ function ProdutoPage() {
   const { data } = useSuspenseQuery(productDetailOptions(id));
   const { data: history } = useSuspenseQuery(priceHistoryOptions(id, 30));
   const { data: stats } = useSuspenseQuery(priceStatsOptions(id, 30));
+  const { addToList, addingId } = useAddToList();
 
   if (!data.product) {
     return (
@@ -129,7 +131,18 @@ function ProdutoPage() {
           <p className="mt-4 text-sm text-muted-foreground">
             Última atualização: {dateTimeFmt(data.last_updated)}
           </p>
-          <Button className="mt-4">Adicionar à lista</Button>
+          <Button
+            className="mt-4"
+            onClick={() => addToList(p.id)}
+            disabled={addingId === p.id}
+          >
+            {addingId === p.id ? (
+              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
+            )}
+            Adicionar à lista
+          </Button>
         </div>
       </div>
 

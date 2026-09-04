@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { Search, ListChecks, Clock } from "lucide-react";
-import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,8 +15,7 @@ import { SectionHeader } from "@/components/ui-app/SectionHeader";
 import { OfferCard, type Offer } from "@/components/ui-app/OfferCard";
 import { MarketCard } from "@/components/ui-app/MarketCard";
 import { getCategoryIcon } from "@/lib/category-icons";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { useAddToList } from "@/hooks/use-add-to-list";
 import {
   marketsQuery,
   lastUpdatedQuery,
@@ -123,12 +121,11 @@ function CategorySection({
 
 function Index() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [q, setQ] = useState("");
-  const [addingId, setAddingId] = useState<string | null>(null);
   const markets = useQuery(marketsQuery);
   const categoryFeed = useQuery(homeCategoryFeedQuery);
   const lastUpdated = useQuery(lastUpdatedQuery);
+  const { addToList, addingId } = useAddToList();
 
   function handleSearch(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -137,44 +134,8 @@ function Index() {
     navigate({ to: "/pesquisar", search: { q: term, category: "", brand: "", store: "", available: false, offers: false, min: 0, max: 0, sort: "price_asc" } });
   }
 
-  async function handleAddToList(offer: Offer) {
-    if (!offer.canonicalId) return;
-    if (!user) {
-      toast.error("Entre para adicionar produtos à sua lista.");
-      navigate({ to: "/auth" });
-      return;
-    }
-    setAddingId(offer.id);
-    try {
-      const { data: existing, error: e1 } = await supabase
-        .from("shopping_lists")
-        .select("id")
-        .order("created_at", { ascending: false })
-        .limit(1);
-      if (e1) throw e1;
-      let listId = existing?.[0]?.id;
-      if (!listId) {
-        const { data: created, error: e2 } = await supabase
-          .from("shopping_lists")
-          .insert({ name: "Minha lista", user_id: user.id })
-          .select("id")
-          .single();
-        if (e2) throw e2;
-        listId = created.id;
-      }
-      const { error: e3 } = await supabase.from("shopping_list_items").insert({
-        shopping_list_id: listId,
-        canonical_product_id: offer.canonicalId,
-        quantity: 1,
-        allow_similar_products: false,
-      });
-      if (e3) throw e3;
-      toast.success("Adicionado à sua lista");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao adicionar");
-    } finally {
-      setAddingId(null);
-    }
+  function handleAddToList(offer: Offer) {
+    addToList(offer.canonicalId, offer.id);
   }
 
   return (

@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ImageOff, Store, Clock, GitCompareArrows, Plus, Trophy, Equal } from "lucide-react";
+import { ImageOff, Store, Clock, GitCompareArrows, Plus, Trophy, Equal, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SearchProductRow, SearchProductOffer } from "@/lib/search-queries";
 
@@ -41,9 +41,11 @@ function withPriceRank(offers: SearchProductOffer[]) {
 export function ProductCard({
   product,
   onAddToList,
+  addingToList,
 }: {
   product: SearchProductRow;
   onAddToList?: (p: SearchProductRow) => void;
+  addingToList?: boolean;
 }) {
   const qty = formatQty(product.quantity, product.unit);
   const discount = Math.round(product.max_discount_pct);
@@ -190,10 +192,14 @@ export function ProductCard({
           size="sm"
           variant="outline"
           onClick={() => onAddToList?.(product)}
-          disabled={!product.is_canonical}
+          disabled={!product.is_canonical || addingToList}
           aria-label="Adicionar à lista"
         >
-          <Plus className="h-4 w-4" aria-hidden="true" />
+          {addingToList ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <Plus className="h-4 w-4" aria-hidden="true" />
+          )}
         </Button>
       </div>
     </Card>

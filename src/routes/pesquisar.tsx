@@ -29,7 +29,7 @@ import {
   type SortBy,
 } from "@/lib/search-queries";
 import { categoriesQuery, marketsQuery } from "@/lib/queries";
-import { toast } from "sonner";
+import { useAddToList } from "@/hooks/use-add-to-list";
 
 const searchSchema = z.object({
   q: fallback(z.string(), "").default(""),
@@ -78,6 +78,7 @@ function PesquisarPage() {
   const navigate = useNavigate({ from: "/pesquisar" });
   const [qDraft, setQDraft] = useState(search.q);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const { addToList, addingId } = useAddToList();
 
   function applyQuery(nextQuery: string) {
     navigate({
@@ -459,9 +460,8 @@ function PesquisarPage() {
                 <ProductCard
                   key={p.id}
                   product={p}
-                  onAddToList={() =>
-                    toast.info("Em breve: monte listas permanentes ao entrar na sua conta.")
-                  }
+                  onAddToList={(product) => addToList(product.id)}
+                  addingToList={addingId === p.id}
                 />
               ))}
             </div>
