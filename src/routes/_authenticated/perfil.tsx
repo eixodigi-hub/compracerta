@@ -15,6 +15,8 @@ import {
   ImageOff,
   Trash2,
   Sparkles,
+  ListChecks,
+  ChevronRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -25,6 +27,7 @@ import {
   unsubscribeAlertById,
   type PromoAlert,
 } from "@/lib/promo-alert-queries";
+import { listsOptions } from "@/lib/shopping-list-queries";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
   head: () => ({
@@ -96,12 +99,7 @@ function PerfilPage() {
       </div>
 
       <div className="mt-8">
-        <Card className="p-5">
-          <h2 className="font-semibold">Listas salvas</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Suas listas de compras aparecerão aqui.
-          </p>
-        </Card>
+        <SavedListsCard />
       </div>
 
       <div className="mt-6">
@@ -316,5 +314,53 @@ function PromoAlertRow({
         <Trash2 className="h-4 w-4" aria-hidden="true" />
       </Button>
     </li>
+  );
+}
+
+/* ---------------------------- Saved lists ---------------------------- */
+
+function SavedListsCard() {
+  const listsQuery = useQuery(listsOptions());
+  const lists = listsQuery.data ?? [];
+
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-center gap-2">
+        <ListChecks className="h-5 w-5 text-primary" aria-hidden="true" />
+        <h2 className="font-semibold">Listas salvas</h2>
+      </div>
+
+      {listsQuery.isLoading ? (
+        <p className="mt-2 text-sm text-muted-foreground">Carregando…</p>
+      ) : lists.length === 0 ? (
+        <p className="mt-2 text-sm text-muted-foreground">
+          Você ainda não tem listas.{" "}
+          <Link to="/lista" className="text-primary hover:underline">
+            Criar minha primeira lista
+          </Link>
+          .
+        </p>
+      ) : (
+        <ul className="mt-3 divide-y divide-border rounded-lg border border-border">
+          {lists.map((l) => (
+            <li key={l.id}>
+              <Link
+                to="/lista"
+                className="flex items-center justify-between gap-3 p-3 text-sm hover:bg-accent"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{l.name}</p>
+                  <p className="text-xs text-muted-foreground">Criada em {fmt(l.created_at)}</p>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   );
 }
