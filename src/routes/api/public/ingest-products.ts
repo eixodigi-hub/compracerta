@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { timingSafeEqual } from "crypto";
-import { SOURCE_CATEGORY_TO_SLUG } from "@/lib/source-category-map";
+import { SOURCE_CATEGORY_TO_SLUG, isBabyProductName } from "@/lib/source-category-map";
 
 const productSchema = z.object({
   external_id: z.string().min(1).max(200),
@@ -177,9 +177,17 @@ export const Route = createFileRoute("/api/public/ingest-products")({
             // Preenche a categoria do produto canônico a partir da categoria
             // bruta do coletor, se ainda não tiver uma. Nunca deve derrubar
             // a atualização de preço em si.
-            if (canonicalProductId && p.source_category) {
-              const categorySlug = SOURCE_CATEGORY_TO_SLUG[p.source_category];
-              const categoryId = categorySlug ? categoryIdBySlug.get(categorySlug) : undefined;
+            if (canonicalProductId) {
+              const categorySlug = p.source_category
+                ? SOURCE_CATEGORY_TO_SLUG[p.source_category]
+                : undefined;
+              let categoryId = categorySlug ? categoryIdBySlug.get(categorySlug) : undefined;
+              // Mamadeira, chupeta e lenço/toalha umedecida de bebê vêm pela
+              // categoria genérica de higiene/perfumaria da loja — corrige
+              // pelo nome, não importa a categoria bruta de origem.
+              if (isBabyProductName(p.external_name)) {
+                categoryId = categoryIdBySlug.get("bebes") ?? categoryId;
+              }
               if (categoryId) {
                 const { error: categoryErr } = await supabaseAdmin
                   .from("canonical_products")

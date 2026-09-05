@@ -54,3 +54,42 @@ export const SOURCE_CATEGORY_TO_SLUG: Record<string, string> = {
   frios_congelados: "alimentos",
   cafeteria: "alimentos",
 };
+
+function normalize(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+const BABY_WIPE_MARKERS = [
+  "baby",
+  "bebe",
+  "infantil",
+  "nascido",
+  "johnson",
+  "pampers",
+  "huggies",
+  "cotondela",
+];
+const BABY_WIPE_EXCLUDE = ["feminin", "intimo", "intima", "antissept"];
+
+/**
+ * Nenhum coletor mapeia uma categoria bruta "bebês" além das fraldas do
+ * Tauste — mamadeira, chupeta e lenço/toalha umedecida de bebê chegam
+ * pela categoria genérica de higiene/perfumaria da loja e ficam presos
+ * lá. Detecta esses itens pelo nome pra sempre corrigir pra "bebes",
+ * não importa a categoria bruta de origem. Fralda fica de fora daqui
+ * de propósito — geriátrica/adulto usa o mesmo termo e já é
+ * corretamente mapeada só pelas chaves de categoria dedicadas.
+ */
+export function isBabyProductName(name: string): boolean {
+  const n = normalize(name);
+  if (n.includes("mamadeira") || n.includes("chupeta")) return true;
+  if (/toalha.*umedecid/.test(n)) return true;
+  if (/lenco.*umedecid/.test(n)) {
+    if (BABY_WIPE_EXCLUDE.some((w) => n.includes(w))) return false;
+    return BABY_WIPE_MARKERS.some((w) => n.includes(w));
+  }
+  return false;
+}
